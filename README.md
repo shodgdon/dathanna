@@ -105,6 +105,9 @@ const hexCss = toTailwindCSS('brand', '#3b82f6', { format: 'hex' });
 
 // Standard Tailwind stops only (50–950, no 25/975):
 const standardCss = toTailwindCSS('brand', '#3b82f6', { extendedStops: false });
+
+// Hex values with standard stops:
+const hexStandard = toTailwindCSS('brand', '#3b82f6', { format: 'hex', extendedStops: false });
 ```
 
 ---
