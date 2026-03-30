@@ -279,18 +279,29 @@ export function generateShades(inputColor, options = {}) {
  *
  * @param {string} name - Color name (e.g. "brand", "primary")
  * @param {string} inputColor - Input color string
- * @param {object} [options] - Same options as generateShades
+ * @param {object} [options] - Same options as generateShades, plus:
+ * @param {'oklch'|'hex'} [options.format='oklch'] - Output color format
  * @returns {string} CSS @theme block
  */
 export function toTailwindCSS(name, inputColor, options = {}) {
-  const { shades } = generateShades(inputColor, options);
+  const { format = 'oklch', ...shadeOptions } = options;
+  const { shades } = generateShades(inputColor, shadeOptions);
 
   const lines = STOPS.map((stop) => {
-    const { oklch: val } = shades[stop];
-    const l = val.l.toFixed(4);
-    const c = val.c.toFixed(4);
-    const h = isFinite(val.h) ? val.h.toFixed(2) : '0';
-    return `  --color-${name}-${stop}: oklch(${l} ${c} ${h});`;
+    const shade = shades[stop];
+    let value;
+
+    if (format === 'hex') {
+      value = shade.hex;
+    } else {
+      const { oklch: val } = shade;
+      const l = val.l.toFixed(4);
+      const c = val.c.toFixed(4);
+      const h = isFinite(val.h) ? val.h.toFixed(2) : '0';
+      value = `oklch(${l} ${c} ${h})`;
+    }
+
+    return `  --color-${name}-${stop}: ${value};`;
   });
 
   return `@theme {\n${lines.join('\n')}\n}`;
