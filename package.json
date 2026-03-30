@@ -1,0 +1,30 @@
+{
+  "name": "dathanna",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Generate Tailwind-style color shade ramps from a single input color using OKLCH",
+  "main": "src/core.js",
+  "exports": {
+    ".": "./src/core.js"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "node test.js",
+    "preview": "node preview.js"
+  },
+  "keywords": [
+    "tailwind",
+    "color",
+    "palette",
+    "oklch",
+    "shades",
+    "css",
+    "design-tokens"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "culori": "^4.0.0"
+  }
+}
