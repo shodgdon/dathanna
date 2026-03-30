@@ -93,6 +93,15 @@ const css = toTailwindCSS('brand', '#3b82f6');
 //   ...
 //   --color-brand-975: oklch(...);
 // }
+
+// Use hex values instead of OKLCH:
+const hexCss = toTailwindCSS('brand', '#3b82f6', { format: 'hex' });
+// @theme {
+//   --color-brand-25: #f8fbff;
+//   --color-brand-50: #eff6ff;
+//   ...
+//   --color-brand-975: #121b2d;
+// }
 ```
 
 ---
