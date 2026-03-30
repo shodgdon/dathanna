@@ -28,6 +28,7 @@ import {
  * Shade stops — standard Tailwind 50–950 plus extended 25 and 975.
  */
 export const STOPS = [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 975];
+export const STANDARD_STOPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
 /**
  * Toe function constants.
@@ -281,13 +282,15 @@ export function generateShades(inputColor, options = {}) {
  * @param {string} inputColor - Input color string
  * @param {object} [options] - Same options as generateShades, plus:
  * @param {'oklch'|'hex'} [options.format='oklch'] - Output color format
+ * @param {boolean} [options.extendedStops=true] - Include 25 and 975 stops
  * @returns {string} CSS @theme block
  */
 export function toTailwindCSS(name, inputColor, options = {}) {
-  const { format = 'oklch', ...shadeOptions } = options;
+  const { format = 'oklch', extendedStops = true, ...shadeOptions } = options;
   const { shades } = generateShades(inputColor, shadeOptions);
+  const stops = extendedStops ? STOPS : STANDARD_STOPS;
 
-  const lines = STOPS.map((stop) => {
+  const lines = stops.map((stop) => {
     const shade = shades[stop];
     let value;
 
