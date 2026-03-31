@@ -165,61 +165,81 @@ By default, every shade is clamped to the sRGB gamut by reducing chroma while pr
 
 ## Tuning Guide
 
-The core generation logic is in `src/core.js`.  Here are the specific knobs to adjust and what they control.
+### Interactive tuner
 
-### Lightness targets (`TONE_TARGETS`)
+The fastest way to tune parameters is the browser-based tuner:
 
-This is the most impactful thing to change.  It's an object mapping each stop number to a target "tone" value on a 0–1 perceptual scale.  Higher values are lighter.
+```bash
+npm run tuner
+# or just: open tuner.html
+```
+
+This opens a self-contained HTML file (no build step, loads culori from CDN) with all generation parameters exposed as sliders.  Changes update color ramps in real time.
+
+#### Tuning mode
+
+The default view shows multiple color ramps simultaneously (blue, red, green, amber by default).  You can add/remove colors or load a demo palette.  All ramps update together when you adjust any parameter, so you can see how a change affects warm, cool, and neutral hues at once.
+
+Four collapsible parameter panels are available:
+
+| Panel | Parameters | What they control |
+| --- | --- | --- |
+| Toe Function | K1, K2 | How perceptual tone maps to OKLCH lightness.  Affects overall contrast distribution. |
+| Chroma Curve | Bell exponent, peak multiplier, min ratio | Shape of the chroma bell curve.  Controls saturation intensity across the ramp. |
+| Hue Shift | 6 hue-region sliders, ramp exponent | Subtle hue adjustments at light/dark extremes, per hue family. |
+| Tone Targets | 13 per-stop sliders (25–975) | Exact perceptual lightness target for each shade stop. |
+
+#### Compare mode
+
+Switch to Compare mode to evaluate dathanna's output against palettes from other tools.  Paste a Tailwind v3 or v4 palette:
+
+```css
+/* Tailwind v4 */
+--color-brand-50: #fafafa;
+--color-brand-100: #f5f5f5;
+...
+```
 
 ```js
+/* Tailwind v3 */
+'50': '#fafafa',
+'100': '#f5f5f5',
+...
+```
+
+The format is auto-detected.  The reference palette appears above dathanna's generated output, aligned at the shared 50–950 stops (dathanna's extended 25 and 975 stops extend beyond).  Click any reference swatch to use that color as the generation input, or enter a hex value manually.
+
+Each dathanna swatch shows lightness (L) and chroma (C) deltas vs. the reference, color-coded green/yellow/red by magnitude.
+
+Toggle **Focus Mode** to hide all swatch text for a pure color-only comparison.
+
+#### Exporting parameters
+
+Once you're happy with the tuning, click **Export Config** to copy the current parameter values to clipboard.  The output is formatted as JS code ready to paste into `src/core.js`:
+
+```js
+const K1 = 0.173;
+const K2 = 0.004;
+
+const bell = Math.sin(t * Math.PI) ** 0.65;
+const peakMultiplier = 1.20;
+const minRatio = 0.20;
+
 const TONE_TARGETS = {
   25:  0.985,
   50:  0.965,
-  // ...
-  950: 0.160,
-  975: 0.100,
+  ...
 };
 ```
 
-If a specific stop feels too light or too dark, adjust its tone value and regenerate the preview.  Small changes (0.01–0.02) have visible effects.
+### Parameter reference
 
-### Toe function constants (`K1`, `K2`)
+The core generation logic is in `src/core.js`.  For details on what each parameter controls:
 
-These control how the perceptual tone scale maps to actual OKLCH lightness.  The current values (`K1=0.173`, `K2=0.004`) were chosen to approximate CIE Lab contrast behavior.  Ottosson's original values (`K1=0.206`, `K2=0.03`) are also reasonable—they produce slightly less contrast in the dark range.
-
-You probably don't need to change these unless you want to fundamentally alter the contrast distribution.
-
-### Chroma curve (in `getChroma`)
-
-Three parameters control the chroma bell curve:
-
-```js
-const bell = Math.sin(t * Math.PI) ** 0.65;  // Exponent: lower = wider bell, higher = sharper peak
-const peakMultiplier = 1.20;                   // How much chroma can exceed the base color's chroma
-const minRatio = 0.20;                         // Minimum chroma ratio at the extremes (25/975)
-```
-
-If shades feel oversaturated in the midtones, lower `peakMultiplier`.  If the light/dark ends feel too gray, raise `minRatio`.  If the curve feels too flat or too peaked, adjust the exponent.
-
-### Hue shifts (in `getHue`)
-
-A lookup table applies per-region hue shifts.  Each entry is the maximum shift in degrees for that hue range:
-
-```js
-if (baseHue >= 0 && baseHue < 60)        shiftDeg = -4;  // Reds
-else if (baseHue >= 60 && baseHue < 120)  shiftDeg = -6;  // Yellows/oranges
-// ...
-```
-
-Set any region to `0` to disable hue shifting for that range, or increase the values if the dark shades look too monotone.  The `1.2` exponent on the magnitude curve controls how quickly the shift ramps up away from the 500 midpoint.
-
-### Tuning workflow
-
-1. Edit a parameter in `src/core.js`
-2. Run `node preview.js` (or `node preview.js "#yourcolor"`)
-3. Refresh `preview.html` in the browser
-4. Compare against Tailwind's reference values with `node test.js`
-5. Repeat
+- **Tone targets** (`TONE_TARGETS`) — Most impactful.  Maps each stop to a perceptual lightness value (0–1).  Small changes (0.01–0.02) have visible effects.
+- **Toe function** (`K1`, `K2`) — Controls the perceptual-to-OKLCH lightness mapping.  Current values approximate CIE Lab contrast.  Ottosson's originals (`K1=0.206`, `K2=0.03`) produce slightly less contrast in the dark range.
+- **Chroma curve** (in `getChroma`) — Bell exponent shapes the curve (lower = wider, higher = peakier).  Peak multiplier allows mid-tones to exceed base chroma.  Min ratio sets the chroma floor at extremes.
+- **Hue shifts** (in `getHue`) — Per-region shift table (max ~6° at extremes).  Set any region to 0 to disable.  Ramp exponent controls how quickly the shift increases away from the 500 midpoint.
 
 ---
 
@@ -233,6 +253,7 @@ dathanna/
   test.js              # Comparison against Tailwind v4 reference values
   preview.js           # Generates preview.html from CLI args or demo colors
   preview.html         # Generated output (not checked in)
+  tuner.html           # Interactive parameter tuner (open directly in browser)
 ```
 
 The intent is for `src/core.js` to eventually be extracted into a larger application.  It has no side effects, no filesystem access, and no CLI concerns—just pure functions that take a color string and return shade data.
