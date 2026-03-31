@@ -108,6 +108,15 @@ const standardCss = toTailwindCSS('brand', '#3b82f6', { extendedStops: false });
 
 // Hex values with standard stops:
 const hexStandard = toTailwindCSS('brand', '#3b82f6', { format: 'hex', extendedStops: false });
+
+// Include contrast variables for text/icons on each shade:
+const withOnColors = toTailwindCSS('brand', '#3b82f6', { onColors: true });
+// Adds: --color-on-brand-500: #ffffff; (white on dark shades, black on light)
+
+// Custom on-color values (hex, CSS variables, or any valid CSS value):
+const customOnColors = toTailwindCSS('brand', '#3b82f6', {
+  onColors: { light: 'var(--color-text-inverse)', dark: 'var(--color-text-primary)' }
+});
 ```
 
 ---

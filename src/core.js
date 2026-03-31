@@ -272,6 +272,25 @@ export function generateShades(inputColor, options = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Contrast color
+// ---------------------------------------------------------------------------
+
+/**
+ * Determine whether light or dark text should be used on a given hex color.
+ * Uses relative luminance with a 0.55 threshold.
+ *
+ * @param {string} hex - Hex color string
+ * @returns {'light'|'dark'} Which text tone to use on this background
+ */
+function contrastTone(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.55 ? 'dark' : 'light';
+}
+
+// ---------------------------------------------------------------------------
 // Convenience: format for Tailwind CSS v4
 // ---------------------------------------------------------------------------
 
@@ -283,10 +302,13 @@ export function generateShades(inputColor, options = {}) {
  * @param {object} [options] - Same options as generateShades, plus:
  * @param {'oklch'|'hex'} [options.format='oklch'] - Output color format
  * @param {boolean} [options.extendedStops=true] - Include 25 and 975 stops
+ * @param {boolean|object} [options.onColors=false] - Generate --color-on-{name} contrast variables.
+ *   Pass true for black/white defaults, or { light: string, dark: string } for custom values
+ *   (hex colors, CSS variables, or any valid CSS value).
  * @returns {string} CSS @theme block
  */
 export function toTailwindCSS(name, inputColor, options = {}) {
-  const { format = 'oklch', extendedStops = true, ...shadeOptions } = options;
+  const { format = 'oklch', extendedStops = true, onColors = false, ...shadeOptions } = options;
   const { shades } = generateShades(inputColor, shadeOptions);
   const stops = extendedStops ? STOPS : STANDARD_STOPS;
 
@@ -306,6 +328,18 @@ export function toTailwindCSS(name, inputColor, options = {}) {
 
     return `  --color-${name}-${stop}: ${value};`;
   });
+
+  if (onColors) {
+    const lightVal = (typeof onColors === 'object' && onColors.light) || '#ffffff';
+    const darkVal = (typeof onColors === 'object' && onColors.dark) || '#000000';
+
+    lines.push('');
+    for (const stop of stops) {
+      const tone = contrastTone(shades[stop].hex);
+      const onValue = tone === 'light' ? lightVal : darkVal;
+      lines.push(`  --color-on-${name}-${stop}: ${onValue};`);
+    }
+  }
 
   return `@theme {\n${lines.join('\n')}\n}`;
 }
