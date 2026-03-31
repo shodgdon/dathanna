@@ -28,6 +28,173 @@
     margin-bottom: 24px;
   }
 
+  /* ---- Mode toggle ---- */
+  .mode-toggle {
+    display: flex;
+    gap: 0;
+    margin-bottom: 20px;
+  }
+
+  .mode-toggle button {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #888;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+  }
+  .mode-toggle button:first-child { border-radius: 6px 0 0 6px; }
+  .mode-toggle button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+  .mode-toggle button.active {
+    background: #2a2a2a;
+    border-color: #60a5fa;
+    color: #fff;
+  }
+
+  /* ---- Compare mode ---- */
+  .compare-section { margin-bottom: 24px; }
+
+  .compare-section textarea {
+    width: 100%;
+    min-height: 160px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 12px;
+    padding: 10px;
+    resize: vertical;
+    margin-bottom: 10px;
+  }
+  .compare-section textarea::placeholder { color: #555; }
+
+  .compare-base-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .compare-base-input label {
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  .compare-base-input input[type="color"] {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+  }
+
+  .compare-base-input input[type="text"] {
+    width: 90px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+
+  .compare-hint {
+    font-size: 11px;
+    color: #666;
+  }
+
+  /* Base color indicator — arrow/circle instead of outline */
+  .swatch.ref-clickable { cursor: pointer; position: relative; }
+
+  .base-indicator {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    line-height: 1;
+    color: #e0e0e0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  /* Arrow above reference swatch (pointing down, outside the top) */
+  .compare-ref-row .base-indicator {
+    top: -14px;
+    z-index: 20;
+  }
+
+  /* Arrow below dathanna swatch (pointing up, outside the bottom) */
+  .compare-dathanna-row .base-indicator {
+    bottom: -14px;
+    z-index: 20;
+  }
+
+  .base-indicator.visible { opacity: 1; }
+
+  .swatch.ref-clickable:hover .base-indicator { opacity: 0.5; }
+
+  /* Comparison layout */
+  .compare-wrapper { position: relative; }
+
+  /* No gap between reference and dathanna rows */
+  .compare-wrapper .palette-row { margin-bottom: 0; }
+  .compare-ref-row .swatches { border-radius: 8px 8px 0 0; }
+  .compare-dathanna-row .swatches { border-radius: 0 0 8px 8px; }
+
+  .compare-ref-row .swatches {
+    /* Inset to align with stops 50-950 of the dathanna row.
+       25 and 975 each take 1/13 of the width. */
+    margin-left: calc(100% / 13);
+    margin-right: calc(100% / 13);
+  }
+
+  /* Space between labels and palettes for arrow clearance */
+  .compare-ref-row .palette-label { margin-bottom: 18px; }
+
+  /* dathanna label goes below the palette in compare mode */
+  .compare-dathanna-row { display: flex; flex-direction: column; }
+  .compare-dathanna-row .palette-label { order: 2; margin-top: 18px; margin-bottom: 0; }
+  .compare-dathanna-row .swatches { order: 1; }
+
+  /* Delta indicators */
+  .swatch-delta {
+    font-size: 7px;
+    font-family: "SF Mono", monospace;
+    opacity: 0.7;
+    line-height: 1.2;
+  }
+  .delta-small { color: #4ade80; }
+  .delta-med { color: #facc15; }
+  .delta-large { color: #f87171; }
+
+  /* Focus mode — hide text inside swatches */
+  .focus-mode .swatch-stop,
+  .focus-mode .swatch-hex,
+  .focus-mode .swatch-oklch,
+  .focus-mode .swatch-delta { display: none; }
+
+  .focus-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+  .focus-toggle label {
+    font-size: 12px;
+    color: #aaa;
+    cursor: pointer;
+    user-select: none;
+  }
+  .focus-toggle input[type="checkbox"] { accent-color: #60a5fa; cursor: pointer; }
+
+  .hidden { display: none !important; }
+
   /* ---- Color inputs ---- */
   .color-inputs {
     display: flex;
@@ -129,13 +296,18 @@
     overflow: hidden;
   }
 
+  /* Allow arrows to overflow in compare mode */
+  .compare-wrapper .swatches { overflow: visible; }
+
   .swatch {
     flex: 1;
     min-width: 0;
+    height: 120px;
     padding: 10px 4px 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     gap: 2px;
     cursor: pointer;
     transition: transform 0.1s;
@@ -152,6 +324,11 @@
     outline: 2px solid rgba(255,255,255,0.6);
     outline-offset: -2px;
     z-index: 5;
+  }
+
+  /* In compare mode, use arrows instead of outline for pinned stop */
+  .compare-wrapper .swatch.pinned {
+    outline: none;
   }
 
   .swatch-stop { font-size: 11px; font-weight: 700; opacity: 0.85; }
@@ -287,11 +464,36 @@
 <h1>dathanna — Parameter Tuner</h1>
 <p class="subtitle">Adjust parameters below. All color ramps update in real time. Click any swatch to copy its hex value.</p>
 
-<!-- Color inputs -->
-<div class="color-inputs" id="colorInputs">
-  <!-- slots inserted by JS -->
-  <button class="add-color-btn" id="addColorBtn">+ Add color</button>
-  <button class="preset-btn" id="presetBtn">Load demo palette</button>
+<!-- Mode toggle -->
+<div class="mode-toggle">
+  <button id="modeTuning" class="active">Tuning</button>
+  <button id="modeCompare">Compare</button>
+</div>
+
+<!-- Tuning mode: color inputs -->
+<div id="tuningSection">
+  <div class="color-inputs" id="colorInputs">
+    <!-- slots inserted by JS -->
+    <button class="add-color-btn" id="addColorBtn">+ Add color</button>
+    <button class="preset-btn" id="presetBtn">Load demo palette</button>
+  </div>
+</div>
+
+<!-- Compare mode: paste palette -->
+<div id="compareSection" class="compare-section hidden">
+  <textarea id="pasteArea" placeholder="Paste a Tailwind v3 or v4 palette here...&#10;&#10;v4: --color-brand-500: #3b82f6;&#10;v3: '500': '#3b82f6',"></textarea>
+  <div class="compare-base-input">
+    <label>Base color:</label>
+    <input type="color" id="compareColorPicker" value="#3b82f6">
+    <input type="text" id="compareColorText" value="#3b82f6" spellcheck="false">
+    <span class="compare-hint">Click a reference swatch or enter manually</span>
+  </div>
+</div>
+
+<!-- Focus mode toggle -->
+<div class="focus-toggle">
+  <input type="checkbox" id="focusMode">
+  <label for="focusMode">Focus Mode</label>
 </div>
 
 <!-- Swatch output -->
@@ -425,6 +627,8 @@ const DEFAULTS = {
 
 let params = structuredClone(DEFAULTS);
 
+const STANDARD_STOPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
 const defaultColors = [
   { hex: '#3b82f6', name: 'blue' },
   { hex: '#ef4444', name: 'red' },
@@ -433,6 +637,9 @@ const defaultColors = [
 ];
 
 let colors = structuredClone(defaultColors);
+let currentMode = 'tuning'; // 'tuning' or 'compare'
+let compareBaseColor = '#3b82f6';
+let parsedReference = null; // { name, stops: { [stop]: { hex, oklch } } }
 
 // ---------------------------------------------------------------------------
 // Generation logic (parameterized copy of core.js)
@@ -683,12 +890,139 @@ for (const [id, path] of paramPairs) {
 }
 
 // ---------------------------------------------------------------------------
+// Mode toggle
+// ---------------------------------------------------------------------------
+
+const modeTuningBtn = document.getElementById('modeTuning');
+const modeCompareBtn = document.getElementById('modeCompare');
+const tuningSection = document.getElementById('tuningSection');
+const compareSection = document.getElementById('compareSection');
+const pasteArea = document.getElementById('pasteArea');
+const compareColorPicker = document.getElementById('compareColorPicker');
+const compareColorText = document.getElementById('compareColorText');
+
+function setMode(mode) {
+  currentMode = mode;
+  modeTuningBtn.classList.toggle('active', mode === 'tuning');
+  modeCompareBtn.classList.toggle('active', mode === 'compare');
+  tuningSection.classList.toggle('hidden', mode !== 'tuning');
+  compareSection.classList.toggle('hidden', mode !== 'compare');
+  render();
+}
+
+modeTuningBtn.addEventListener('click', () => setMode('tuning'));
+modeCompareBtn.addEventListener('click', () => setMode('compare'));
+
+// ---------------------------------------------------------------------------
+// Palette parser (v3 & v4 auto-detect)
+// ---------------------------------------------------------------------------
+
+function parsePalette(text) {
+  if (!text.trim()) return null;
+
+  const stops = {};
+  let name = 'palette';
+
+  // Try v4: --color-{name}-{stop}: {value};
+  const v4Re = /--color-([\w-]+)-(\d+)\s*:\s*(.+?)\s*;/g;
+  let match;
+  let v4Count = 0;
+  while ((match = v4Re.exec(text)) !== null) {
+    const [, n, stop, value] = match;
+    name = n;
+    const parsed = parse(value);
+    if (parsed) {
+      const oklchVal = toOklch(parsed);
+      stops[Number(stop)] = {
+        hex: formatHex(parsed),
+        oklch: { l: oklchVal.l, c: oklchVal.c || 0, h: oklchVal.h || 0 },
+      };
+      v4Count++;
+    }
+  }
+
+  if (v4Count > 0) return { name, stops };
+
+  // Try v3: '50': '#eff6ff', or "50": "#eff6ff",
+  const v3Re = /['"]?(\d+)['"]?\s*:\s*['"](.+?)['"]/g;
+  let v3Count = 0;
+  // Try to extract name from v3 object key like 'brand': {
+  const nameMatch = text.match(/['"]?([\w-]+)['"]?\s*:\s*\{/);
+  if (nameMatch) name = nameMatch[1];
+
+  while ((match = v3Re.exec(text)) !== null) {
+    const [, stop, value] = match;
+    const parsed = parse(value);
+    if (parsed) {
+      const oklchVal = toOklch(parsed);
+      stops[Number(stop)] = {
+        hex: formatHex(parsed),
+        oklch: { l: oklchVal.l, c: oklchVal.c || 0, h: oklchVal.h || 0 },
+      };
+      v3Count++;
+    }
+  }
+
+  if (v3Count > 0) return { name, stops };
+  return null;
+}
+
+pasteArea.addEventListener('input', () => {
+  parsedReference = parsePalette(pasteArea.value);
+  // Auto-select base color from 500 or nearest
+  if (parsedReference) {
+    const refStops = Object.keys(parsedReference.stops).map(Number).sort((a, b) => a - b);
+    const best = refStops.includes(500) ? 500 : refStops.reduce((prev, curr) =>
+      Math.abs(curr - 500) < Math.abs(prev - 500) ? curr : prev
+    );
+    setCompareBaseColor(parsedReference.stops[best].hex);
+  }
+  render();
+});
+
+function setCompareBaseColor(hex) {
+  compareBaseColor = hex;
+  compareColorPicker.value = hex;
+  compareColorText.value = hex;
+}
+
+compareColorPicker.addEventListener('input', () => {
+  compareBaseColor = compareColorPicker.value;
+  compareColorText.value = compareColorPicker.value;
+  render();
+});
+
+compareColorText.addEventListener('input', () => {
+  const val = compareColorText.value.trim();
+  const p = parse(val);
+  if (p) {
+    compareBaseColor = val;
+    try { compareColorPicker.value = formatHex(p); } catch (_) {}
+    render();
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Rendering
 // ---------------------------------------------------------------------------
 
 const palettesEl = document.getElementById('palettes');
+const focusModeCheckbox = document.getElementById('focusMode');
+
+focusModeCheckbox.addEventListener('change', () => {
+  palettesEl.classList.toggle('focus-mode', focusModeCheckbox.checked);
+});
 
 function render() {
+  if (currentMode === 'tuning') {
+    renderTuning();
+  } else {
+    renderCompare();
+  }
+  palettesEl.classList.toggle('focus-mode', focusModeCheckbox.checked);
+}
+
+function renderTuning() {
   let html = '';
 
   for (const c of colors) {
@@ -732,16 +1066,113 @@ function render() {
   palettesEl.innerHTML = html;
 }
 
+function deltaClass(val) {
+  const abs = Math.abs(val);
+  if (abs < 0.02) return 'delta-small';
+  if (abs < 0.05) return 'delta-med';
+  return 'delta-large';
+}
+
+function fmtDelta(val) {
+  const sign = val >= 0 ? '+' : '\u2212';
+  return sign + Math.abs(val).toFixed(3);
+}
+
+function renderCompare() {
+  if (!parsedReference) {
+    palettesEl.innerHTML = `<div style="color:#666;font-size:13px;padding:20px 0;">Paste a Tailwind palette above to compare.</div>`;
+    return;
+  }
+
+  const refStops = Object.keys(parsedReference.stops).map(Number).sort((a, b) => a - b);
+  let compareBaseHex;
+  try { compareBaseHex = formatHex(parse(compareBaseColor)).toLowerCase(); } catch (_) { compareBaseHex = ''; }
+
+  // Reference row — only shows the stops from the pasted palette
+  const refSwatches = refStops.map(stop => {
+    const s = parsedReference.stops[stop];
+    const fg = contrastColor(s.hex);
+    const isSelected = s.hex.toLowerCase() === compareBaseHex;
+    return `<div class="swatch ref-clickable" style="background:${s.hex};color:${fg}" data-hex="${s.hex}" data-ref-stop="${stop}">
+      <span class="base-indicator${isSelected ? ' visible' : ''}">&#9660;</span>
+      <span class="swatch-stop">${stop}</span>
+      <span class="swatch-hex">${s.hex}</span>
+      <span class="swatch-oklch">L ${s.oklch.l.toFixed(3)}</span>
+      <span class="swatch-oklch">C ${s.oklch.c.toFixed(3)}</span>
+      <span class="swatch-oklch">H ${isFinite(s.oklch.h) ? s.oklch.h.toFixed(1) : '\u2013'}</span>
+    </div>`;
+  }).join('');
+
+  // dathanna row — all 13 stops, label below
+  const result = generateShades(compareBaseColor);
+  let dathannaHtml = '';
+  if (result) {
+    const { shades, pinnedStop } = result;
+    const dathannaSwatches = STOPS.map(stop => {
+      const s = shades[stop];
+      const fg = contrastColor(s.hex);
+      const ref = parsedReference.stops[stop];
+      const isPinned = stop === pinnedStop;
+
+      let deltaHtml = '';
+      if (ref) {
+        const dL = s.oklch.l - ref.oklch.l;
+        const dC = (s.oklch.c || 0) - (ref.oklch.c || 0);
+        deltaHtml = `<span class="swatch-delta ${deltaClass(dL)}">${fmtDelta(dL)} L</span>
+          <span class="swatch-delta ${deltaClass(dC)}">${fmtDelta(dC)} C</span>`;
+      }
+
+      return `<div class="swatch${isPinned ? ' pinned' : ''}" style="background:${s.hex};color:${fg}" data-hex="${s.hex}">
+        <span class="base-indicator${isPinned ? ' visible' : ''}">&#9650;</span>
+        <span class="swatch-stop">${stop}</span>
+        <span class="swatch-hex">${s.hex}</span>
+        <span class="swatch-oklch">L ${s.oklch.l.toFixed(3)}</span>
+        <span class="swatch-oklch">C ${(s.oklch.c || 0).toFixed(3)}</span>
+        <span class="swatch-oklch">H ${isFinite(s.oklch.h) ? s.oklch.h.toFixed(1) : '\u2013'}</span>
+        ${deltaHtml}
+      </div>`;
+    }).join('');
+
+    dathannaHtml = `<div class="palette-row compare-dathanna-row">
+      <div class="palette-label">
+        <span class="palette-name">dathanna</span>
+        <span class="palette-input">${esc(compareBaseColor)}</span>
+        <span class="palette-pin">pinned: ${pinnedStop}</span>
+      </div>
+      <div class="swatches">${dathannaSwatches}</div>
+    </div>`;
+  }
+
+  palettesEl.innerHTML = `<div class="compare-wrapper">
+    <div class="palette-row compare-ref-row">
+      <div class="palette-label">
+        <span class="palette-name">${esc(parsedReference.name)}</span>
+        <span class="palette-pin">reference</span>
+      </div>
+      <div class="swatches">${refSwatches}</div>
+    </div>
+    ${dathannaHtml}
+  </div>`;
+}
+
 function esc(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Click-to-copy on swatches
+// Click handling on swatches — copy hex, or select reference base in compare mode
 palettesEl.addEventListener('click', (e) => {
   const swatch = e.target.closest('.swatch');
   if (!swatch) return;
   const hex = swatch.dataset.hex;
   if (!hex) return;
+
+  // In compare mode, clicking a reference swatch selects it as the base color
+  if (currentMode === 'compare' && swatch.dataset.refStop) {
+    setCompareBaseColor(hex);
+    render();
+    return;
+  }
+
   navigator.clipboard.writeText(hex).then(() => showToast('Copied ' + hex));
 });
 
