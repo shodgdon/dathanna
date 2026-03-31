@@ -12,7 +12,8 @@
   ],
   "scripts": {
     "test": "node test.js",
-    "preview": "node preview.js"
+    "preview": "node preview.js",
+    "tuner": "open tuner.html"
   },
   "keywords": [
     "tailwind",

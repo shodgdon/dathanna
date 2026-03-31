@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dathanna — Parameter Tuner</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 24px;
+  }
+
+  /* ---- Color inputs ---- */
+  .color-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .color-slot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 6px 10px;
+  }
+
+  .color-slot input[type="color"] {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+  }
+
+  .color-slot input[type="text"] {
+    width: 80px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 12px;
+    padding: 4px 6px;
+  }
+
+  .color-slot .remove-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .color-slot .remove-btn:hover { color: #f87171; }
+
+  .add-color-btn, .preset-btn {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+  .add-color-btn:hover, .preset-btn:hover {
+    border-color: #555;
+    color: #fff;
+  }
+
+  /* ---- Swatch rows ---- */
+  .palettes { margin-bottom: 28px; }
+
+  .palette-row { margin-bottom: 20px; }
+
+  .palette-label {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .palette-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .palette-input {
+    font-size: 12px;
+    font-family: "SF Mono", "Fira Code", monospace;
+    color: #888;
+  }
+
+  .palette-pin {
+    font-size: 11px;
+    color: #666;
+  }
+
+  .swatches {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .swatch {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 4px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+  }
+
+  .swatch:hover {
+    transform: scaleY(1.12);
+    z-index: 10;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  .swatch.pinned {
+    outline: 2px solid rgba(255,255,255,0.6);
+    outline-offset: -2px;
+    z-index: 5;
+  }
+
+  .swatch-stop { font-size: 11px; font-weight: 700; opacity: 0.85; }
+  .swatch-hex { font-size: 9px; font-family: "SF Mono", monospace; opacity: 0.7; }
+  .swatch-oklch { font-size: 8px; font-family: "SF Mono", monospace; opacity: 0.5; }
+  .swatch:hover .swatch-hex, .swatch:hover .swatch-oklch { opacity: 1; }
+
+  /* ---- Parameter panels ---- */
+  details {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 0;
+  }
+
+  summary {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    user-select: none;
+    list-style: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before {
+    content: '\25B6';
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 10px;
+    transition: transform 0.15s;
+  }
+  details[open] summary::before { transform: rotate(90deg); }
+
+  .panel-body {
+    padding: 4px 16px 16px;
+  }
+
+  .param-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .param-label {
+    width: 140px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #aaa;
+  }
+
+  .param-row input[type="range"] {
+    flex: 1;
+    min-width: 100px;
+    accent-color: #60a5fa;
+  }
+
+  .param-row input[type="number"] {
+    width: 72px;
+    background: #111;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    padding: 3px 6px;
+    text-align: right;
+  }
+
+  .tone-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+  }
+
+  .hue-region-label {
+    font-size: 11px;
+    color: #777;
+    min-width: 100px;
+  }
+
+  /* ---- Footer buttons ---- */
+  .footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .footer button {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #aaa;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 8px 16px;
+  }
+  .footer button:hover { border-color: #555; color: #fff; }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: "SF Mono", monospace;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 900px) {
+    .swatches { flex-wrap: wrap; border-radius: 6px; }
+    .swatch { min-width: 60px; flex: 0 0 auto; }
+    .tone-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>dathanna — Parameter Tuner</h1>
+<p class="subtitle">Adjust parameters below. All color ramps update in real time. Click any swatch to copy its hex value.</p>
+
+<!-- Color inputs -->
+<div class="color-inputs" id="colorInputs">
+  <!-- slots inserted by JS -->
+  <button class="add-color-btn" id="addColorBtn">+ Add color</button>
+  <button class="preset-btn" id="presetBtn">Load demo palette</button>
+</div>
+
+<!-- Swatch output -->
+<div class="palettes" id="palettes"></div>
+
+<!-- Parameter panels -->
+<details open>
+  <summary>Toe Function</summary>
+  <div class="panel-body">
+    <div class="param-row">
+      <span class="param-label">K1</span>
+      <input type="range" id="k1_range" min="0" max="0.5" step="0.001" value="0.173">
+      <input type="number" id="k1_num" min="0" max="0.5" step="0.001" value="0.173">
+    </div>
+    <div class="param-row">
+      <span class="param-label">K2</span>
+      <input type="range" id="k2_range" min="0" max="0.1" step="0.001" value="0.004">
+      <input type="number" id="k2_num" min="0" max="0.1" step="0.001" value="0.004">
+    </div>
+  </div>
+</details>
+
+<details open>
+  <summary>Chroma Curve</summary>
+  <div class="panel-body">
+    <div class="param-row">
+      <span class="param-label">Bell exponent</span>
+      <input type="range" id="bellExp_range" min="0.1" max="2.0" step="0.01" value="0.65">
+      <input type="number" id="bellExp_num" min="0.1" max="2.0" step="0.01" value="0.65">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Peak multiplier</span>
+      <input type="range" id="peakMul_range" min="0.5" max="2.5" step="0.01" value="1.20">
+      <input type="number" id="peakMul_num" min="0.5" max="2.5" step="0.01" value="1.20">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Min ratio</span>
+      <input type="range" id="minRatio_range" min="0" max="0.5" step="0.01" value="0.20">
+      <input type="number" id="minRatio_num" min="0" max="0.5" step="0.01" value="0.20">
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Hue Shift</summary>
+  <div class="panel-body">
+    <div class="param-row">
+      <span class="param-label">Reds <span class="hue-region-label">(0–60°)</span></span>
+      <input type="range" id="hue0_range" min="-15" max="15" step="0.5" value="-4">
+      <input type="number" id="hue0_num" min="-15" max="15" step="0.5" value="-4">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Yellows/Oranges <span class="hue-region-label">(60–120°)</span></span>
+      <input type="range" id="hue1_range" min="-15" max="15" step="0.5" value="-6">
+      <input type="number" id="hue1_num" min="-15" max="15" step="0.5" value="-6">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Greens <span class="hue-region-label">(120–180°)</span></span>
+      <input type="range" id="hue2_range" min="-15" max="15" step="0.5" value="-4">
+      <input type="number" id="hue2_num" min="-15" max="15" step="0.5" value="-4">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Cyans/Blues <span class="hue-region-label">(180–240°)</span></span>
+      <input type="range" id="hue3_range" min="-15" max="15" step="0.5" value="-3">
+      <input type="number" id="hue3_num" min="-15" max="15" step="0.5" value="-3">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Indigos/Violets <span class="hue-region-label">(240–300°)</span></span>
+      <input type="range" id="hue4_range" min="-15" max="15" step="0.5" value="3">
+      <input type="number" id="hue4_num" min="-15" max="15" step="0.5" value="3">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Magentas/Pinks <span class="hue-region-label">(300–360°)</span></span>
+      <input type="range" id="hue5_range" min="-15" max="15" step="0.5" value="4">
+      <input type="number" id="hue5_num" min="-15" max="15" step="0.5" value="4">
+    </div>
+    <div class="param-row">
+      <span class="param-label">Ramp exponent</span>
+      <input type="range" id="rampExp_range" min="0.5" max="3.0" step="0.1" value="1.2">
+      <input type="number" id="rampExp_num" min="0.5" max="3.0" step="0.1" value="1.2">
+    </div>
+  </div>
+</details>
+
+<details>
+  <summary>Tone Targets</summary>
+  <div class="panel-body">
+    <div class="tone-grid" id="toneGrid">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</details>
+
+<!-- Footer -->
+<div class="footer">
+  <button id="resetBtn">Reset All</button>
+  <button id="exportBtn">Export Config</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import {
+  parse,
+  formatHex,
+  formatCss,
+  clampChroma,
+  converter,
+} from 'https://esm.sh/culori@4';
+
+// ---------------------------------------------------------------------------
+// Constants & defaults
+// ---------------------------------------------------------------------------
+
+const STOPS = [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 975];
+
+const DEFAULTS = {
+  k1: 0.173,
+  k2: 0.004,
+  bellExp: 0.65,
+  peakMul: 1.20,
+  minRatio: 0.20,
+  hueShifts: [-4, -6, -4, -3, 3, 4],
+  rampExp: 1.2,
+  toneTargets: {
+    25: 0.985, 50: 0.965, 100: 0.930, 200: 0.870, 300: 0.790,
+    400: 0.700, 500: 0.590, 600: 0.490, 700: 0.390, 800: 0.310,
+    900: 0.240, 950: 0.160, 975: 0.100,
+  },
+};
+
+let params = structuredClone(DEFAULTS);
+
+const defaultColors = [
+  { hex: '#3b82f6', name: 'blue' },
+  { hex: '#ef4444', name: 'red' },
+  { hex: '#22c55e', name: 'green' },
+  { hex: '#f59e0b', name: 'amber' },
+];
+
+let colors = structuredClone(defaultColors);
+
+// ---------------------------------------------------------------------------
+// Generation logic (parameterized copy of core.js)
+// ---------------------------------------------------------------------------
+
+const toOklch = converter('oklch');
+
+function toeInv(x) {
+  const k3 = (1.0 + params.k1) / (1.0 + params.k2);
+  return (x * x + params.k1 * x) / (k3 * (x + params.k2));
+}
+
+function toe(x) {
+  const k3 = (1.0 + params.k1) / (1.0 + params.k2);
+  const k3x = k3 * x;
+  const a = 1;
+  const b = params.k1 - k3x;
+  const c = -k3x * params.k2;
+  return (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+}
+
+function findClosestStop(oklchL) {
+  const inputTone = toe(oklchL);
+  let closestStop = 500;
+  let closestDist = Infinity;
+  for (const [stop, targetTone] of Object.entries(params.toneTargets)) {
+    const dist = Math.abs(inputTone - targetTone);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestStop = Number(stop);
+    }
+  }
+  return closestStop;
+}
+
+function getChroma(baseChroma, stop) {
+  if (baseChroma < 0.008) return 0;
+  const t = (stop - 25) / (975 - 25);
+  const bell = Math.sin(t * Math.PI) ** params.bellExp;
+  const ratio = params.minRatio + (params.peakMul - params.minRatio) * bell;
+  return baseChroma * ratio;
+}
+
+function getHue(baseHue, stop) {
+  if (!isFinite(baseHue)) return 0;
+  const distance = (stop - 500) / 475;
+  const magnitude = Math.pow(Math.abs(distance), params.rampExp);
+
+  let shiftDeg = 0;
+  if (baseHue >= 0 && baseHue < 60)        shiftDeg = params.hueShifts[0];
+  else if (baseHue >= 60 && baseHue < 120)  shiftDeg = params.hueShifts[1];
+  else if (baseHue >= 120 && baseHue < 180) shiftDeg = params.hueShifts[2];
+  else if (baseHue >= 180 && baseHue < 240) shiftDeg = params.hueShifts[3];
+  else if (baseHue >= 240 && baseHue < 300) shiftDeg = params.hueShifts[4];
+  else                                      shiftDeg = params.hueShifts[5];
+
+  return baseHue + shiftDeg * magnitude * Math.sign(distance);
+}
+
+function generateShades(inputColor) {
+  const parsed = parse(inputColor);
+  if (!parsed) return null;
+
+  const base = toOklch(parsed);
+  const baseL = base.l;
+  const baseC = base.c || 0;
+  const baseH = base.h || 0;
+  const pinnedStop = findClosestStop(baseL);
+
+  const shades = {};
+  for (const stop of STOPS) {
+    let l, c, h;
+    if (stop === pinnedStop) {
+      l = baseL; c = baseC; h = baseH;
+    } else {
+      l = toeInv(params.toneTargets[stop]);
+      c = getChroma(baseC, stop);
+      h = getHue(baseH, stop);
+    }
+
+    let color = { mode: 'oklch', l, c, h };
+    color = clampChroma(color, 'oklch', 'rgb');
+
+    const hex = formatHex(color);
+    shades[stop] = {
+      oklch: { l: color.l, c: color.c || 0, h: color.h || 0 },
+      hex,
+    };
+  }
+  return { shades, pinnedStop };
+}
+
+// ---------------------------------------------------------------------------
+// UI: Color input management
+// ---------------------------------------------------------------------------
+
+const colorInputsEl = document.getElementById('colorInputs');
+const addColorBtn = document.getElementById('addColorBtn');
+const presetBtn = document.getElementById('presetBtn');
+
+function contrastColor(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return lum > 0.55 ? '#000000' : '#ffffff';
+}
+
+function renderColorSlots() {
+  // Remove existing slots
+  colorInputsEl.querySelectorAll('.color-slot').forEach(el => el.remove());
+
+  colors.forEach((c, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'color-slot';
+    slot.innerHTML = `
+      <input type="color" value="${c.hex}" data-idx="${i}">
+      <input type="text" value="${c.hex}" data-idx="${i}" spellcheck="false">
+      <button class="remove-btn" data-idx="${i}">&times;</button>
+    `;
+    colorInputsEl.insertBefore(slot, addColorBtn);
+  });
+
+  addColorBtn.style.display = colors.length >= 6 ? 'none' : '';
+}
+
+colorInputsEl.addEventListener('input', (e) => {
+  const idx = Number(e.target.dataset.idx);
+  if (isNaN(idx)) return;
+  const slot = e.target.closest('.color-slot');
+
+  if (e.target.type === 'color') {
+    colors[idx].hex = e.target.value;
+    slot.querySelector('input[type="text"]').value = e.target.value;
+    render();
+  } else if (e.target.type === 'text') {
+    const val = e.target.value.trim();
+    // Only update if it looks like a valid color
+    if (parse(val)) {
+      colors[idx].hex = val;
+      // Sync color picker (needs a hex)
+      try {
+        const hex = formatHex(parse(val));
+        slot.querySelector('input[type="color"]').value = hex;
+      } catch (_) {}
+      render();
+    }
+  }
+});
+
+colorInputsEl.addEventListener('click', (e) => {
+  if (e.target.classList.contains('remove-btn')) {
+    const idx = Number(e.target.dataset.idx);
+    if (colors.length > 1) {
+      colors.splice(idx, 1);
+      renderColorSlots();
+      render();
+    }
+  }
+});
+
+addColorBtn.addEventListener('click', () => {
+  if (colors.length < 6) {
+    colors.push({ hex: '#6366f1', name: `color-${colors.length + 1}` });
+    renderColorSlots();
+    render();
+  }
+});
+
+presetBtn.addEventListener('click', () => {
+  colors = structuredClone(defaultColors);
+  renderColorSlots();
+  render();
+});
+
+// ---------------------------------------------------------------------------
+// UI: Tone target sliders (generated dynamically)
+// ---------------------------------------------------------------------------
+
+const toneGrid = document.getElementById('toneGrid');
+
+for (const stop of STOPS) {
+  const val = DEFAULTS.toneTargets[stop];
+  const row = document.createElement('div');
+  row.className = 'param-row';
+  row.innerHTML = `
+    <span class="param-label">Stop ${stop}</span>
+    <input type="range" id="tone${stop}_range" min="0" max="1" step="0.005" value="${val}">
+    <input type="number" id="tone${stop}_num" min="0" max="1" step="0.005" value="${val}">
+  `;
+  toneGrid.appendChild(row);
+}
+
+// ---------------------------------------------------------------------------
+// UI: Parameter sync (slider <-> number input)
+// ---------------------------------------------------------------------------
+
+const paramPairs = [
+  ['k1', 'k1'],
+  ['k2', 'k2'],
+  ['bellExp', 'bellExp'],
+  ['peakMul', 'peakMul'],
+  ['minRatio', 'minRatio'],
+  ['hue0', 'hueShifts.0'],
+  ['hue1', 'hueShifts.1'],
+  ['hue2', 'hueShifts.2'],
+  ['hue3', 'hueShifts.3'],
+  ['hue4', 'hueShifts.4'],
+  ['hue5', 'hueShifts.5'],
+  ['rampExp', 'rampExp'],
+  ...STOPS.map(s => [`tone${s}`, `toneTargets.${s}`]),
+];
+
+function setParam(path, value) {
+  const parts = path.split('.');
+  if (parts.length === 1) {
+    params[parts[0]] = value;
+  } else {
+    params[parts[0]][parts[1]] = value;
+  }
+}
+
+function getParam(path) {
+  const parts = path.split('.');
+  if (parts.length === 1) return params[parts[0]];
+  return params[parts[0]][parts[1]];
+}
+
+for (const [id, path] of paramPairs) {
+  const range = document.getElementById(`${id}_range`);
+  const num = document.getElementById(`${id}_num`);
+
+  range.addEventListener('input', () => {
+    const v = parseFloat(range.value);
+    num.value = v;
+    setParam(path, v);
+    render();
+  });
+
+  num.addEventListener('input', () => {
+    const v = parseFloat(num.value);
+    if (!isNaN(v)) {
+      range.value = v;
+      setParam(path, v);
+      render();
+    }
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+
+const palettesEl = document.getElementById('palettes');
+
+function render() {
+  let html = '';
+
+  for (const c of colors) {
+    const result = generateShades(c.hex);
+    if (!result) {
+      html += `<div class="palette-row">
+        <div class="palette-label">
+          <span class="palette-name">${esc(c.name || c.hex)}</span>
+          <span style="color:#f87171;font-size:12px">Invalid color</span>
+        </div>
+      </div>`;
+      continue;
+    }
+
+    const { shades, pinnedStop } = result;
+    const swatches = STOPS.map(stop => {
+      const s = shades[stop];
+      const fg = contrastColor(s.hex);
+      const l = s.oklch.l.toFixed(3);
+      const ch = s.oklch.c.toFixed(3);
+      const h = isFinite(s.oklch.h) ? s.oklch.h.toFixed(1) : '\u2013';
+      return `<div class="swatch${stop === pinnedStop ? ' pinned' : ''}" style="background:${s.hex};color:${fg}" data-hex="${s.hex}">
+        <span class="swatch-stop">${stop}</span>
+        <span class="swatch-hex">${s.hex}</span>
+        <span class="swatch-oklch">L ${l}</span>
+        <span class="swatch-oklch">C ${ch}</span>
+        <span class="swatch-oklch">H ${h}</span>
+      </div>`;
+    }).join('');
+
+    html += `<div class="palette-row">
+      <div class="palette-label">
+        <span class="palette-name">${esc(c.name || c.hex)}</span>
+        <span class="palette-input">${esc(c.hex)}</span>
+        <span class="palette-pin">pinned: ${pinnedStop}</span>
+      </div>
+      <div class="swatches">${swatches}</div>
+    </div>`;
+  }
+
+  palettesEl.innerHTML = html;
+}
+
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Click-to-copy on swatches
+palettesEl.addEventListener('click', (e) => {
+  const swatch = e.target.closest('.swatch');
+  if (!swatch) return;
+  const hex = swatch.dataset.hex;
+  if (!hex) return;
+  navigator.clipboard.writeText(hex).then(() => showToast('Copied ' + hex));
+});
+
+// ---------------------------------------------------------------------------
+// Toast
+// ---------------------------------------------------------------------------
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1200);
+}
+
+// ---------------------------------------------------------------------------
+// Reset & Export
+// ---------------------------------------------------------------------------
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  params = structuredClone(DEFAULTS);
+  for (const [id, path] of paramPairs) {
+    const v = getParam(path);
+    document.getElementById(`${id}_range`).value = v;
+    document.getElementById(`${id}_num`).value = v;
+  }
+  render();
+});
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const lines = [];
+  lines.push('// Toe function');
+  lines.push(`const K1 = ${params.k1};`);
+  lines.push(`const K2 = ${params.k2};`);
+  lines.push('');
+  lines.push('// Chroma curve (in getChroma)');
+  lines.push(`const bell = Math.sin(t * Math.PI) ** ${params.bellExp};`);
+  lines.push(`const peakMultiplier = ${params.peakMul};`);
+  lines.push(`const minRatio = ${params.minRatio};`);
+  lines.push('');
+  lines.push('// Hue shifts (in getHue)');
+  const regions = ['Reds 0-60', 'Yellows 60-120', 'Greens 120-180', 'Cyans 180-240', 'Indigos 240-300', 'Magentas 300-360'];
+  params.hueShifts.forEach((v, i) => {
+    lines.push(`// ${regions[i]}: shiftDeg = ${v > 0 ? '+' : ''}${v};`);
+  });
+  lines.push(`// Ramp exponent: ${params.rampExp}`);
+  lines.push('');
+  lines.push('// Tone targets');
+  lines.push('const TONE_TARGETS = {');
+  for (const stop of STOPS) {
+    lines.push(`  ${stop}: ${Number(params.toneTargets[stop]).toFixed(3)},`);
+  }
+  lines.push('};');
+
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(() => showToast('Config copied to clipboard'));
+});
+
+// ---------------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------------
+
+renderColorSlots();
+render();
+</script>
+
+</body>
+</html>
