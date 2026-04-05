@@ -1,78 +1,176 @@
-/**
- * dathanna — Core Module
- *
- * Generates Tailwind-style color shade ramps from a single input color.
- * Uses OKLCH color space with a toe function for perceptually-uniform
- * lightness distribution and proper contrast behavior.
- *
- * Based on:
- * - Björn Ottosson's OKLCH and lightness toe function
- * - facelessuser's tonal palette exploration (modified K constants)
- * - Tailwind CSS v4's OKLCH color values as reference targets
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dathanna — Tailwind Shades</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-import {
-  parse,
-  oklch,
-  formatHex,
-  formatCss,
-  clampChroma,
-  converter,
-} from 'culori';
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    padding: 24px;
+    min-height: 100vh;
+  }
 
-// ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
+  /* ---- Sticky header ---- */
+  .sticky-header {
+    position: sticky;
+    top: -24px;
+    z-index: 50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f0f0f;
+    padding: 12px 0;
+    margin: -24px -24px 20px;
+    padding: 12px 24px;
+    border-bottom: 1px solid #2a2a2a;
+  }
 
-/**
- * Shade stops — standard Tailwind 50–950 plus extended 25 and 975.
- */
-export const STOPS = [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 975];
-export const STANDARD_STOPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+  .header-left, .header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
 
-/**
- * Toe function constants.
- * Original Ottosson values: K1=0.206, K2=0.03
- * Modified values (from facelessuser's exploration) that better approximate
- * CIE Lab lightness for improved contrast in tonal palettes.
- */
-const K1 = 0.173;
-const K2 = 0.004;
-const K3 = (1.0 + K1) / (1.0 + K2);
+  .header-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
 
-/**
- * Target "tone" values for each stop on a 0–1 scale.
- * These represent perceptual lightness targets (CIE Lab-like).
- * The toe function converts these to actual OKLCH L values.
- *
- * Calibrated against Tailwind CSS v4's default palette.
- */
-const TONE_TARGETS = {
-  25:  0.985,
-  50:  0.965,
-  100: 0.930,
-  200: 0.870,
-  300: 0.790,
-  400: 0.700,
-  500: 0.590,
-  600: 0.490,
-  700: 0.390,
-  800: 0.310,
-  900: 0.240,
-  950: 0.160,
-  975: 0.100,
-};
+  .header-btn {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #888;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+  }
+
+  .header-btn:hover {
+    border-color: #555;
+    color: #fff;
+  }
+
+  .header-btn.active {
+    border-color: #60a5fa;
+    color: #fff;
+  }
+
+  .hidden { display: none !important; }
+
+  /* ---- Swatch rows ---- */
+  .palettes { margin-bottom: 28px; }
+
+  .palette-row { margin-bottom: 20px; }
+
+  .palette-label {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 6px;
+  }
+
+  .palette-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .swatches {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .swatch {
+    flex: 1;
+    min-width: 0;
+    height: 120px;
+    padding: 10px 4px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+  }
+
+  .swatch:hover {
+    transform: scaleY(1.12);
+    z-index: 10;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+
+  .swatch-stop { font-size: 11px; font-weight: 700; opacity: 0.85; }
+  .swatch-hex { font-size: 9px; font-family: "SF Mono", monospace; opacity: 0.7; }
+  .swatch-oklch { font-size: 8px; font-family: "SF Mono", monospace; opacity: 0.5; }
+  .swatch:hover .swatch-hex, .swatch:hover .swatch-oklch { opacity: 1; }
+
+  /* Focus mode — hide text inside swatches */
+  .focus-mode .swatch-stop,
+  .focus-mode .swatch-hex,
+  .focus-mode .swatch-oklch { display: none; }
+
+  /* ---- Toast ---- */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #333;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: "SF Mono", monospace;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 900px) {
+    .swatches { flex-wrap: wrap; border-radius: 6px; }
+    .swatch { min-width: 60px; flex: 0 0 auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="sticky-header">
+  <div class="header-left">
+    <span class="header-title">Tailwind Shades</span>
+  </div>
+  <div class="header-right">
+    <button id="focusModeBtn" class="header-btn">Focus Mode</button>
+  </div>
+</header>
+
+<div class="palettes" id="palettes"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { formatHex, clampChroma, parse } from 'https://cdn.jsdelivr.net/npm/culori/+esm';
 
 // ---------------------------------------------------------------------------
 // Tailwind v4 / v4.2 default palettes — OKLCH values
 // ---------------------------------------------------------------------------
 
-/**
- * All 26 standard Tailwind default color palettes with their official OKLCH
- * values for stops 50–950. Use with extrapolateLight/extrapolateDark to
- * generate the additional 25 and 975 shades.
- */
-export const TAILWIND_PALETTES = {
+const TAILWIND_PALETTES = {
   red: {
     50:  { l: 0.971, c: 0.013, h: 17.38 },
     100: { l: 0.936, c: 0.032, h: 17.717 },
@@ -414,24 +512,27 @@ export const TAILWIND_PALETTES = {
 };
 
 // ---------------------------------------------------------------------------
-// Shade extrapolation for default palettes
+// Shade extrapolation — geometric ratio in distance-from-endpoint space
 // ---------------------------------------------------------------------------
 
-/**
- * Extrapolate shade 25 from existing stops using geometric ratio in
- * distance-from-endpoint space. Uses the ratio between stops 50 and 100
- * to predict one step lighter.
- *
- * @param {object} stops - Palette stops object (keyed by stop number, each { l, c, h })
- * @returns {{ l: number, c: number, h: number }} Extrapolated OKLCH values
- */
-export function extrapolateLight(stops) {
+// For the light end (shade 25), we work in "distance from white" = (1 - L).
+// For the dark end (shade 975), we work in "distance from black" = L.
+// Chroma naturally decays toward 0 at both ends, so we use C directly.
+//
+// In each case, we compute the geometric ratio between the two outermost
+// known stops and apply it one more time. This can never overshoot the
+// endpoint (0 or 1) because multiplication preserves the sign.
+
+function extrapolateLight(stops) {
+  // Extrapolate shade 25 from stops 50, 100
   const d50  = 1 - stops[50].l;
   const d100 = 1 - stops[100].l;
 
+  // Lightness: geometric ratio in distance-from-white space
   const lRatio = (d100 > 0.001) ? d50 / d100 : 0.5;
-  const l = 1 - d50 * Math.min(lRatio, 0.9);
+  const l = 1 - d50 * Math.min(lRatio, 0.9);  // cap ratio to keep shade visible
 
+  // Chroma: geometric decay
   let c;
   if (stops[100].c > 0.001) {
     const cRatio = stops[50].c / stops[100].c;
@@ -441,24 +542,22 @@ export function extrapolateLight(stops) {
   }
   c = Math.max(0, c);
 
-  return { l, c, h: stops[50].h };
+  // Hue: keep shade 50's hue (at this low chroma, hue is barely perceptible)
+  const h = stops[50].h;
+
+  return { l, c, h };
 }
 
-/**
- * Extrapolate shade 975 from existing stops using geometric ratio in
- * distance-from-endpoint space. Uses the ratio between stops 950 and 900
- * to predict one step darker.
- *
- * @param {object} stops - Palette stops object (keyed by stop number, each { l, c, h })
- * @returns {{ l: number, c: number, h: number }} Extrapolated OKLCH values
- */
-export function extrapolateDark(stops) {
+function extrapolateDark(stops) {
+  // Extrapolate shade 975 from stops 950, 900
   const l950 = stops[950].l;
   const l900 = stops[900].l;
 
+  // Lightness: geometric ratio in distance-from-black space (L itself)
   const lRatio = (l900 > 0.001) ? l950 / l900 : 0.5;
-  const l = l950 * Math.min(lRatio, 0.9);
+  const l = l950 * Math.min(lRatio, 0.9);  // cap ratio to keep shade visible
 
+  // Chroma: geometric decay
   let c;
   if (stops[900].c > 0.001) {
     const cRatio = stops[950].c / stops[900].c;
@@ -468,286 +567,115 @@ export function extrapolateDark(stops) {
   }
   c = Math.max(0, c);
 
-  return { l, c, h: stops[950].h };
+  // Hue: keep shade 950's hue
+  const h = stops[950].h;
+
+  return { l, c, h };
+}
+
+function oklchToHex(lch) {
+  const color = { mode: 'oklch', l: lch.l, c: lch.c, h: lch.h };
+  const clamped = clampChroma(color, 'oklch');
+  return formatHex(clamped);
 }
 
 // ---------------------------------------------------------------------------
-// Toe function
+// Rendering
 // ---------------------------------------------------------------------------
 
-/**
- * Inverse toe function — converts a perceptual tone (CIE Lab-like scale)
- * to an OKLCH lightness value.
- *
- * @param {number} x - Perceptual tone, 0–1
- * @returns {number} OKLCH L value
- */
-function toeInv(x) {
-  return (x * x + K1 * x) / (K3 * (x + K2));
+const STOPS = [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 975];
+const palettesEl = document.getElementById('palettes');
+
+function textColor(l) {
+  return l > 0.6 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.87)';
 }
 
-/**
- * Forward toe function — converts OKLCH L back to perceptual tone.
- * Used to determine which shade stop an input color maps to.
- *
- * @param {number} x - OKLCH L value
- * @returns {number} Perceptual tone, 0–1
- */
-function toe(x) {
-  const k3x = K3 * x;
-  // Solve quadratic: t^2 + K1*t - K3*x*t - K3*x*K2 = 0
-  // => t^2 + (K1 - K3*x)*t - K3*x*K2 = 0
-  const a = 1;
-  const b = K1 - k3x;
-  const c = -k3x * K2;
-  return (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
-}
+function render() {
+  let html = '';
 
-// ---------------------------------------------------------------------------
-// Chroma curve
-// ---------------------------------------------------------------------------
+  for (const [name, stops] of Object.entries(TAILWIND_PALETTES)) {
+    // Extrapolate 25 and 975
+    const shade25 = extrapolateLight(stops);
+    const shade975 = extrapolateDark(stops);
 
-/**
- * Compute chroma for a given stop based on the base color's chroma.
- * Creates a bell-shaped curve peaking in the mid-range (around 400–600)
- * and tapering toward both extremes.
- *
- * @param {number} baseChroma - The input color's OKLCH chroma
- * @param {number} stop - The shade stop number
- * @returns {number} Target chroma for this stop
- */
-function getChroma(baseChroma, stop) {
-  if (baseChroma < 0.008) return 0; // effectively achromatic
+    const allStops = { 25: shade25, ...stops, 975: shade975 };
 
-  // Normalize stop to 0–1 range across our full scale
-  const t = (stop - 25) / (975 - 25);
+    html += `<div class="palette-row">`;
+    html += `<div class="palette-label"><span class="palette-name">${name}</span></div>`;
+    html += `<div class="swatches">`;
 
-  // Bell curve: peaks around t=0.35–0.5 (roughly stop 400–600), tapers at edges.
-  // Tailwind's palette pushes chroma quite hard in the midtones —
-  // often exceeding the base color's chroma (e.g. blue-600 has higher C than blue-500).
-  // We use a boosted curve that can exceed 1.0x of base chroma in the peak range.
-  const bell = Math.sin(t * Math.PI) ** 0.65;
+    for (const stop of STOPS) {
+      const lch = allStops[stop];
+      const hex = oklchToHex(lch);
+      const isGenerated = stop === 25 || stop === 975;
+      const fg = textColor(lch.l);
 
-  // Peak boost: Tailwind's mid-range shades often have ~15-25% more chroma
-  // than the 500 shade. Allow the curve to exceed base chroma.
-  const peakMultiplier = 1.20;
-  const minRatio = 0.20;
-  const ratio = minRatio + (peakMultiplier - minRatio) * bell;
-
-  return baseChroma * ratio;
-}
-
-// ---------------------------------------------------------------------------
-// Hue shift
-// ---------------------------------------------------------------------------
-
-/**
- * Compute a subtle hue shift for a given stop.
- * Warm colors shift slightly cool in dark shades, cool colors shift
- * slightly warm. This mimics natural color behavior and matches
- * the patterns in Tailwind's hand-tuned palette.
- *
- * @param {number} baseHue - The input color's OKLCH hue (degrees)
- * @param {number} stop - The shade stop number
- * @returns {number} Adjusted hue for this stop
- */
-function getHue(baseHue, stop) {
-  if (!isFinite(baseHue)) return 0; // achromatic
-
-  // Distance from the midpoint, normalized to -1..+1
-  const distance = (stop - 500) / 475;
-
-  // Shift magnitude increases with distance from center
-  const magnitude = Math.pow(Math.abs(distance), 1.2);
-
-  // Direction depends on hue region.
-  // These shifts are subtle (max ~6° at the extremes).
-  let shiftDeg = 0;
-
-  if (baseHue >= 0 && baseHue < 60)        shiftDeg = -4;  // reds: shift cooler in darks
-  else if (baseHue >= 60 && baseHue < 120)  shiftDeg = -6;  // yellows/oranges: shift toward red in darks
-  else if (baseHue >= 120 && baseHue < 180) shiftDeg = -4;  // greens: shift toward yellow in darks
-  else if (baseHue >= 180 && baseHue < 240) shiftDeg = -3;  // cyans/blues: slight shift
-  else if (baseHue >= 240 && baseHue < 300) shiftDeg = +3;  // indigos/violets: shift toward blue in darks
-  else                                      shiftDeg = +4;  // magentas/pinks: shift toward red in darks
-
-  return baseHue + shiftDeg * magnitude * Math.sign(distance);
-}
-
-// ---------------------------------------------------------------------------
-// Stop mapping
-// ---------------------------------------------------------------------------
-
-/**
- * Determine which shade stop the input color most naturally maps to
- * based on its lightness.
- *
- * @param {number} oklchL - The input color's OKLCH L value
- * @returns {number} The closest shade stop
- */
-export function findClosestStop(oklchL) {
-  const inputTone = toe(oklchL);
-
-  let closestStop = 500;
-  let closestDist = Infinity;
-
-  for (const [stop, targetTone] of Object.entries(TONE_TARGETS)) {
-    const dist = Math.abs(inputTone - targetTone);
-    if (dist < closestDist) {
-      closestDist = dist;
-      closestStop = Number(stop);
+      html += `<div class="swatch${isGenerated ? ' generated' : ''}" `
+            + `data-hex="${hex}" `
+            + `style="background:${hex}; color:${fg}">`;
+      html += `<span class="swatch-stop">${stop}</span>`;
+      html += `<span class="swatch-hex">${hex}</span>`;
+      html += `<span class="swatch-oklch">${lch.l.toFixed(3)} ${lch.c.toFixed(3)}</span>`;
+      html += `</div>`;
     }
+
+    html += `</div></div>`;
   }
 
-  return closestStop;
+  palettesEl.innerHTML = html;
+  palettesEl.classList.toggle('focus-mode', focusModeActive);
 }
 
 // ---------------------------------------------------------------------------
-// Main generation
+// Focus Mode
 // ---------------------------------------------------------------------------
 
-const toOklch = converter('oklch');
+let focusModeActive = false;
+const focusModeBtn = document.getElementById('focusModeBtn');
 
-/**
- * Generate a full shade ramp from a single input color.
- *
- * @param {string} inputColor - Any CSS color string (hex, rgb, hsl, oklch, etc.)
- * @param {object} [options]
- * @param {number} [options.pinStop] - Force the input color to a specific stop (e.g. 500).
- *   If omitted, auto-detects based on lightness.
- * @param {boolean} [options.clampToSrgb=true] - Gamut-map to sRGB. Set false for P3 output.
- * @returns {object} { shades: Record<number, {oklch, hex, css}>, pinnedStop: number }
- */
-export function generateShades(inputColor, options = {}) {
-  const { pinStop, clampToSrgb = true } = options;
+function toggleFocusMode() {
+  focusModeActive = !focusModeActive;
+  focusModeBtn.classList.toggle('active', focusModeActive);
+  palettesEl.classList.toggle('focus-mode', focusModeActive);
+}
 
-  // Parse and convert to OKLCH
-  const parsed = parse(inputColor);
-  if (!parsed) {
-    throw new Error(`Could not parse color: "${inputColor}"`);
+focusModeBtn.addEventListener('click', toggleFocusMode);
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'f' && !e.ctrlKey && !e.metaKey && e.target === document.body) {
+    toggleFocusMode();
   }
+});
 
-  const base = toOklch(parsed);
-  const baseL = base.l;
-  const baseC = base.c || 0;
-  const baseH = base.h || 0;
+// ---------------------------------------------------------------------------
+// Click-to-copy
+// ---------------------------------------------------------------------------
 
-  // Determine which stop the input maps to
-  const pinnedStop = pinStop || findClosestStop(baseL);
+palettesEl.addEventListener('click', (e) => {
+  const swatch = e.target.closest('.swatch');
+  if (!swatch) return;
+  const hex = swatch.dataset.hex;
+  if (!hex) return;
+  navigator.clipboard.writeText(hex).then(() => showToast('Copied ' + hex));
+});
 
-  const shades = {};
+// ---------------------------------------------------------------------------
+// Toast
+// ---------------------------------------------------------------------------
 
-  for (const stop of STOPS) {
-    let l, c, h;
-
-    if (stop === pinnedStop) {
-      // Use the exact input color at its pinned stop
-      l = baseL;
-      c = baseC;
-      h = baseH;
-    } else {
-      // Compute target lightness via tone function
-      const targetTone = TONE_TARGETS[stop];
-      l = toeInv(targetTone);
-
-      // Chroma: bell curve based on base chroma
-      c = getChroma(baseC, stop);
-
-      // Hue: subtle shift
-      h = getHue(baseH, stop);
-    }
-
-    // Construct the OKLCH color
-    let color = { mode: 'oklch', l, c, h };
-
-    // Gamut mapping: reduce chroma to fit in sRGB
-    if (clampToSrgb) {
-      color = clampChroma(color, 'oklch', 'rgb');
-    }
-
-    // Format outputs
-    const hex = formatHex(color);
-    const css = formatCss(color);
-
-    shades[stop] = {
-      oklch: { l: color.l, c: color.c || 0, h: color.h || 0 },
-      hex,
-      css,
-    };
-  }
-
-  return { shades, pinnedStop };
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1200);
 }
 
 // ---------------------------------------------------------------------------
-// Contrast color
+// Init
 // ---------------------------------------------------------------------------
 
-/**
- * Determine whether light or dark text should be used on a given hex color.
- * Uses relative luminance with a 0.55 threshold.
- *
- * @param {string} hex - Hex color string
- * @returns {'light'|'dark'} Which text tone to use on this background
- */
-function contrastTone(hex) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.55 ? 'dark' : 'light';
-}
-
-// ---------------------------------------------------------------------------
-// Convenience: format for Tailwind CSS v4
-// ---------------------------------------------------------------------------
-
-/**
- * Generate a Tailwind v4 @theme block for a named color.
- *
- * @param {string} name - Color name (e.g. "brand", "primary")
- * @param {string} inputColor - Input color string
- * @param {object} [options] - Same options as generateShades, plus:
- * @param {'oklch'|'hex'} [options.format='oklch'] - Output color format
- * @param {boolean} [options.extendedStops=true] - Include 25 and 975 stops
- * @param {boolean|object} [options.onColors=false] - Generate --color-on-{name} contrast variables.
- *   Pass true for black/white defaults, or { light: string, dark: string } for custom values
- *   (hex colors, CSS variables, or any valid CSS value).
- * @returns {string} CSS @theme block
- */
-export function toTailwindCSS(name, inputColor, options = {}) {
-  const { format = 'oklch', extendedStops = true, onColors = false, ...shadeOptions } = options;
-  const { shades } = generateShades(inputColor, shadeOptions);
-  const stops = extendedStops ? STOPS : STANDARD_STOPS;
-
-  const lines = stops.map((stop) => {
-    const shade = shades[stop];
-    let value;
-
-    if (format === 'hex') {
-      value = shade.hex;
-    } else {
-      const { oklch: val } = shade;
-      const l = val.l.toFixed(4);
-      const c = val.c.toFixed(4);
-      const h = isFinite(val.h) ? val.h.toFixed(2) : '0';
-      value = `oklch(${l} ${c} ${h})`;
-    }
-
-    return `  --color-${name}-${stop}: ${value};`;
-  });
-
-  if (onColors) {
-    const lightVal = (typeof onColors === 'object' && onColors.light) || '#ffffff';
-    const darkVal = (typeof onColors === 'object' && onColors.dark) || '#000000';
-
-    lines.push('');
-    for (const stop of stops) {
-      const tone = contrastTone(shades[stop].hex);
-      const onValue = tone === 'light' ? lightVal : darkVal;
-      lines.push(`  --color-on-${name}-${stop}: ${onValue};`);
-    }
-  }
-
-  return `@theme {\n${lines.join('\n')}\n}`;
-}
+render();
+</script>
+</body>
+</html>

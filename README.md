@@ -80,6 +80,31 @@ generateShades('#22c55e', { pinStop: 500 });
 generateShades('#3b82f6', { clampToSrgb: false });
 ```
 
+### Tailwind default palettes
+
+All 26 standard Tailwind v4/v4.2 default color palettes are available as OKLCH data, along with functions to extrapolate the additional 25 and 975 shades:
+
+```js
+import { TAILWIND_PALETTES, extrapolateLight, extrapolateDark } from './src/core.js';
+
+// Get a palette's stops (50–950)
+const blue = TAILWIND_PALETTES.blue;
+// { 50: { l: 0.97, c: 0.014, h: 254.604 }, 100: { ... }, ... }
+
+// Generate the extended 25 and 975 shades
+const shade25 = extrapolateLight(blue);   // { l, c, h }
+const shade975 = extrapolateDark(blue);   // { l, c, h }
+```
+
+Available palettes: red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose, slate, gray, zinc, neutral, stone, taupe, mauve, mist, olive.
+
+To browse all palettes visually with their generated 25/975 shades:
+
+```bash
+npm run shades
+# or just: open tailwind-shades.html
+```
+
 ### Tailwind CSS v4 output
 
 ```js
@@ -253,13 +278,14 @@ The core generation logic is in `src/core.js`.  For details on what each paramet
 
 ```
 dathanna/
-  package.json         # Project config, culori dependency
+  package.json           # Project config, culori dependency
   src/
-    core.js            # All generation logic, exports generateShades() and toTailwindCSS()
-  test.js              # Comparison against Tailwind v4 reference values
-  preview.js           # Generates preview.html from CLI args or demo colors
-  preview.html         # Generated output (not checked in)
-  tuner.html           # Interactive parameter tuner (open directly in browser)
+    core.js              # All generation logic, palette data, exports
+  test.js                # Comparison against Tailwind v4 reference values
+  preview.js             # Generates preview.html from CLI args or demo colors
+  preview.html           # Generated output (not checked in)
+  tuner.html             # Interactive parameter tuner (open directly in browser)
+  tailwind-shades.html   # Tailwind default palettes with generated 25/975 shades
 ```
 
 The intent is for `src/core.js` to eventually be extracted into a larger application.  It has no side effects, no filesystem access, and no CLI concerns—just pure functions that take a color string and return shade data.
