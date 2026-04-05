@@ -20,3 +20,13 @@ Generate Tailwind-style color shade ramps from a single input color using OKLCH 
 - Plain JavaScript, ES modules (`"type": "module"`)
 - Node.js 18+ target
 - Single production dependency: `culori`. Do not add new dependencies without explicit approval.
+
+## Reference (read on demand, not upfront)
+
+- Programmatic API & options → README.md "Programmatic Usage"
+- Tuning parameters & what they control → README.md "Tuning Guide"
+- How generation works (OKLCH, toe function, chroma curve) → README.md "How It Works"
+
+## Maintenance
+
+- When adding commands, files, or conventions, update this file.
