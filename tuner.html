@@ -15,41 +15,61 @@
     min-height: 100vh;
   }
 
-  h1 {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: #fff;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 24px;
-  }
-
-  /* ---- Mode toggle ---- */
-  .mode-toggle {
+  /* ---- Sticky header ---- */
+  .sticky-header {
+    position: sticky;
+    top: -24px;
+    z-index: 50;
     display: flex;
-    gap: 0;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    align-items: center;
+    background: #0f0f0f;
+    padding: 12px 0;
+    margin: -24px -24px 20px;
+    padding: 12px 24px;
+    border-bottom: 1px solid #2a2a2a;
   }
 
-  .mode-toggle button {
+  .header-left, .header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .mode-btn, .header-btn {
     background: #1a1a1a;
     border: 1px solid #333;
+    border-radius: 6px;
     color: #888;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    padding: 8px 20px;
+    padding: 8px 16px;
   }
-  .mode-toggle button:first-child { border-radius: 6px 0 0 6px; }
-  .mode-toggle button:last-child { border-radius: 0 6px 6px 0; border-left: none; }
-  .mode-toggle button.active {
+
+  .mode-btn:hover, .header-btn:hover {
+    border-color: #555;
+    color: #fff;
+  }
+
+  .mode-btn.active {
     background: #2a2a2a;
     border-color: #60a5fa;
     color: #fff;
+  }
+
+  .header-btn.active {
+    border-color: #60a5fa;
+    color: #fff;
+  }
+
+  .header-btn:disabled {
+    opacity: 0.25;
+    cursor: default;
+  }
+  .header-btn:hover:disabled {
+    border-color: #333;
+    color: #888;
   }
 
   /* ---- Compare mode ---- */
@@ -179,19 +199,6 @@
   .focus-mode .swatch-oklch,
   .focus-mode .swatch-delta { display: none; }
 
-  .focus-toggle {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-  .focus-toggle label {
-    font-size: 12px;
-    color: #aaa;
-    cursor: pointer;
-    user-select: none;
-  }
-  .focus-toggle input[type="checkbox"] { accent-color: #60a5fa; cursor: pointer; }
 
   .hidden { display: none !important; }
 
@@ -398,11 +405,59 @@
     font-size: 12px;
     padding: 3px 6px;
     text-align: right;
+    -moz-appearance: textfield;
   }
+  .param-row input[type="number"]::-webkit-inner-spin-button,
+  .param-row input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .param-controls {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .param-controls button {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #666;
+    cursor: pointer;
+    font-size: 11px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+  }
+  .param-controls button:hover {
+    border-color: #555;
+    color: #fff;
+  }
+  .param-controls .param-down { border-radius: 4px 0 0 4px; }
+  .param-controls .param-up { border-radius: 0 4px 4px 0; border-left: none; }
+  .param-controls .param-reset {
+    border-radius: 4px;
+    margin-left: 2px;
+    font-size: 10px;
+  }
+  .param-controls .param-reset:hover:not(:disabled) { color: #60a5fa; border-color: #60a5fa; }
+  .param-controls .param-reset:disabled { opacity: 0.25; cursor: default; }
+
+  .param-steppers {
+    display: flex;
+    gap: 0;
+  }
+
 
   .tone-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(7, auto);
+    grid-auto-flow: column;
     gap: 4px 24px;
   }
 
@@ -412,23 +467,45 @@
     min-width: 100px;
   }
 
-  /* ---- Footer buttons ---- */
-  .footer {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
+  /* ---- Info tooltips ---- */
+  .info-tooltip {
+    float: right;
+    position: relative;
+    font-size: 14px;
+    color: #666;
+    cursor: help;
+    font-weight: normal;
   }
 
-  .footer button {
-    background: #1a1a1a;
-    border: 1px solid #333;
+  .info-tooltip:hover { color: #aaa; }
+
+  .info-tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 6px;
+    width: 280px;
+    background: #2a2a2a;
+    border: 1px solid #444;
     border-radius: 6px;
-    color: #aaa;
-    cursor: pointer;
+    padding: 8px 10px;
     font-size: 12px;
-    padding: 8px 16px;
+    font-weight: 400;
+    color: #ccc;
+    line-height: 1.4;
+    white-space: normal;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 30;
   }
-  .footer button:hover { border-color: #555; color: #fff; }
+
+  .info-tooltip:hover::after { opacity: 1; }
+
+  /* ---- Paste panel ---- */
+  .paste-panel { margin-bottom: 16px; }
+  .paste-panel-body { padding: 8px 16px 16px; }
 
   /* ---- Toast ---- */
   .toast {
@@ -455,20 +532,24 @@
   @media (max-width: 900px) {
     .swatches { flex-wrap: wrap; border-radius: 6px; }
     .swatch { min-width: 60px; flex: 0 0 auto; }
-    .tone-grid { grid-template-columns: 1fr; }
+    .tone-grid { grid-template-columns: 1fr; grid-template-rows: auto; grid-auto-flow: row; }
   }
 </style>
 </head>
 <body>
 
-<h1>dathanna — Parameter Tuner</h1>
-<p class="subtitle">Adjust parameters below. All color ramps update in real time. Click any swatch to copy its hex value.</p>
-
-<!-- Mode toggle -->
-<div class="mode-toggle">
-  <button id="modeTuning" class="active">Tuning</button>
-  <button id="modeCompare">Compare</button>
-</div>
+<!-- Sticky header -->
+<header class="sticky-header">
+  <div class="header-left">
+    <button id="modeCompare" class="mode-btn active">Compare</button>
+    <button id="modeTuning" class="mode-btn">Tuning</button>
+  </div>
+  <div class="header-right">
+    <button id="focusModeBtn" class="header-btn">Focus Mode</button>
+    <button id="resetBtn" class="header-btn">Reset All</button>
+    <button id="exportBtn" class="header-btn">Export Config</button>
+  </div>
+</header>
 
 <!-- Tuning mode: color inputs -->
 <div id="tuningSection">
@@ -479,21 +560,20 @@
   </div>
 </div>
 
-<!-- Compare mode: paste palette -->
+<!-- Compare mode: collapsible paste palette -->
 <div id="compareSection" class="compare-section hidden">
-  <textarea id="pasteArea" placeholder="Paste a Tailwind v3 or v4 palette here...&#10;&#10;v4: --color-brand-500: #3b82f6;&#10;v3: '500': '#3b82f6',"></textarea>
-  <div class="compare-base-input">
-    <label>Base color:</label>
-    <input type="color" id="compareColorPicker" value="#3b82f6">
-    <input type="text" id="compareColorText" value="#3b82f6" spellcheck="false">
-    <span class="compare-hint">Click a reference swatch or enter manually</span>
-  </div>
-</div>
-
-<!-- Focus mode toggle -->
-<div class="focus-toggle">
-  <input type="checkbox" id="focusMode">
-  <label for="focusMode">Focus Mode</label>
+  <details id="pasteDetails" class="paste-panel" open>
+    <summary>Palette Input</summary>
+    <div class="paste-panel-body">
+      <textarea id="pasteArea" placeholder="Paste a Tailwind v3 or v4 palette here...&#10;&#10;v4: --color-brand-500: #3b82f6;&#10;v3: '500': '#3b82f6',"></textarea>
+      <div class="compare-base-input">
+        <label>Base color:</label>
+        <input type="color" id="compareColorPicker" value="#3b82f6">
+        <input type="text" id="compareColorText" value="#3b82f6" spellcheck="false">
+        <span class="compare-hint">Click a reference swatch or enter manually</span>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- Swatch output -->
@@ -501,97 +581,103 @@
 
 <!-- Parameter panels -->
 <details open>
-  <summary>Toe Function</summary>
+  <summary>Toe Function <span class="info-tooltip" data-tip="Controls perceptual-to-OKLCH lightness mapping. K1 and K2 approximate CIE Lab contrast.">&#9432;</span></summary>
   <div class="panel-body">
     <div class="param-row">
       <span class="param-label">K1</span>
       <input type="range" id="k1_range" min="0" max="0.5" step="0.001" value="0.173">
       <input type="number" id="k1_num" min="0" max="0.5" step="0.001" value="0.173">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="k1">&#9664;</button><button class="param-up" title="Increase" data-id="k1">&#9654;</button></div><button class="param-reset" data-id="k1" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">K2</span>
       <input type="range" id="k2_range" min="0" max="0.1" step="0.001" value="0.004">
       <input type="number" id="k2_num" min="0" max="0.1" step="0.001" value="0.004">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="k2">&#9664;</button><button class="param-up" title="Increase" data-id="k2">&#9654;</button></div><button class="param-reset" data-id="k2" title="Reset to default">&#8634;</button></div>
     </div>
   </div>
 </details>
 
 <details open>
-  <summary>Chroma Curve</summary>
+  <summary>Chroma Curve <span class="info-tooltip" data-tip="Shapes chroma distribution. Bell exponent controls curve width, peak multiplier allows mid-tones to exceed base chroma, min ratio sets the chroma floor.">&#9432;</span></summary>
   <div class="panel-body">
     <div class="param-row">
       <span class="param-label">Bell exponent</span>
       <input type="range" id="bellExp_range" min="0.1" max="2.0" step="0.01" value="0.65">
       <input type="number" id="bellExp_num" min="0.1" max="2.0" step="0.01" value="0.65">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="bellExp">&#9664;</button><button class="param-up" title="Increase" data-id="bellExp">&#9654;</button></div><button class="param-reset" data-id="bellExp" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Peak multiplier</span>
       <input type="range" id="peakMul_range" min="0.5" max="2.5" step="0.01" value="1.20">
       <input type="number" id="peakMul_num" min="0.5" max="2.5" step="0.01" value="1.20">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="peakMul">&#9664;</button><button class="param-up" title="Increase" data-id="peakMul">&#9654;</button></div><button class="param-reset" data-id="peakMul" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Min ratio</span>
       <input type="range" id="minRatio_range" min="0" max="0.5" step="0.01" value="0.20">
       <input type="number" id="minRatio_num" min="0" max="0.5" step="0.01" value="0.20">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="minRatio">&#9664;</button><button class="param-up" title="Increase" data-id="minRatio">&#9654;</button></div><button class="param-reset" data-id="minRatio" title="Reset to default">&#8634;</button></div>
     </div>
   </div>
 </details>
 
 <details>
-  <summary>Hue Shift</summary>
+  <summary>Hue Shift <span class="info-tooltip" data-tip="Subtle hue adjustments at light/dark extremes per hue family. Ramp exponent controls how quickly shift increases from the midpoint.">&#9432;</span></summary>
   <div class="panel-body">
     <div class="param-row">
       <span class="param-label">Reds <span class="hue-region-label">(0–60°)</span></span>
       <input type="range" id="hue0_range" min="-15" max="15" step="0.5" value="-4">
       <input type="number" id="hue0_num" min="-15" max="15" step="0.5" value="-4">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="hue0">&#9664;</button><button class="param-up" title="Increase" data-id="hue0">&#9654;</button></div><button class="param-reset" data-id="hue0" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Yellows/Oranges <span class="hue-region-label">(60–120°)</span></span>
       <input type="range" id="hue1_range" min="-15" max="15" step="0.5" value="-6">
       <input type="number" id="hue1_num" min="-15" max="15" step="0.5" value="-6">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="hue1">&#9664;</button><button class="param-up" title="Increase" data-id="hue1">&#9654;</button></div><button class="param-reset" data-id="hue1" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Greens <span class="hue-region-label">(120–180°)</span></span>
       <input type="range" id="hue2_range" min="-15" max="15" step="0.5" value="-4">
       <input type="number" id="hue2_num" min="-15" max="15" step="0.5" value="-4">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="hue2">&#9664;</button><button class="param-up" title="Increase" data-id="hue2">&#9654;</button></div><button class="param-reset" data-id="hue2" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Cyans/Blues <span class="hue-region-label">(180–240°)</span></span>
       <input type="range" id="hue3_range" min="-15" max="15" step="0.5" value="-3">
       <input type="number" id="hue3_num" min="-15" max="15" step="0.5" value="-3">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="hue3">&#9664;</button><button class="param-up" title="Increase" data-id="hue3">&#9654;</button></div><button class="param-reset" data-id="hue3" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Indigos/Violets <span class="hue-region-label">(240–300°)</span></span>
       <input type="range" id="hue4_range" min="-15" max="15" step="0.5" value="3">
       <input type="number" id="hue4_num" min="-15" max="15" step="0.5" value="3">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="hue4">&#9664;</button><button class="param-up" title="Increase" data-id="hue4">&#9654;</button></div><button class="param-reset" data-id="hue4" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Magentas/Pinks <span class="hue-region-label">(300–360°)</span></span>
       <input type="range" id="hue5_range" min="-15" max="15" step="0.5" value="4">
       <input type="number" id="hue5_num" min="-15" max="15" step="0.5" value="4">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="hue5">&#9664;</button><button class="param-up" title="Increase" data-id="hue5">&#9654;</button></div><button class="param-reset" data-id="hue5" title="Reset to default">&#8634;</button></div>
     </div>
     <div class="param-row">
       <span class="param-label">Ramp exponent</span>
       <input type="range" id="rampExp_range" min="0.5" max="3.0" step="0.1" value="1.2">
       <input type="number" id="rampExp_num" min="0.5" max="3.0" step="0.1" value="1.2">
+      <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="rampExp">&#9664;</button><button class="param-up" title="Increase" data-id="rampExp">&#9654;</button></div><button class="param-reset" data-id="rampExp" title="Reset to default">&#8634;</button></div>
     </div>
   </div>
 </details>
 
 <details>
-  <summary>Tone Targets</summary>
+  <summary>Tone Targets <span class="info-tooltip" data-tip="Maps each stop to a perceptual lightness value (0-1). Most impactful parameter — small changes (0.01-0.02) are visible.">&#9432;</span></summary>
   <div class="panel-body">
     <div class="tone-grid" id="toneGrid">
       <!-- filled by JS -->
     </div>
   </div>
 </details>
-
-<!-- Footer -->
-<div class="footer">
-  <button id="resetBtn">Reset All</button>
-  <button id="exportBtn">Export Config</button>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -637,7 +723,7 @@ const defaultColors = [
 ];
 
 let colors = structuredClone(defaultColors);
-let currentMode = 'tuning'; // 'tuning' or 'compare'
+let currentMode = 'compare'; // 'tuning' or 'compare'
 let compareBaseColor = '#3b82f6';
 let parsedReference = null; // { name, stops: { [stop]: { hex, oklch } } }
 
@@ -829,6 +915,7 @@ for (const stop of STOPS) {
     <span class="param-label">Stop ${stop}</span>
     <input type="range" id="tone${stop}_range" min="0" max="1" step="0.005" value="${val}">
     <input type="number" id="tone${stop}_num" min="0" max="1" step="0.005" value="${val}">
+    <div class="param-controls"><div class="param-steppers"><button class="param-down" title="Decrease" data-id="tone${stop}">&#9664;</button><button class="param-up" title="Increase" data-id="tone${stop}">&#9654;</button></div><button class="param-reset" data-id="tone${stop}" title="Reset to default">&#8634;</button></div>
   `;
   toneGrid.appendChild(row);
 }
@@ -868,6 +955,51 @@ function getParam(path) {
   return params[parts[0]][parts[1]];
 }
 
+function getDefault(path) {
+  const parts = path.split('.');
+  if (parts.length === 1) return DEFAULTS[parts[0]];
+  return DEFAULTS[parts[0]][parts[1]];
+}
+
+// Build a lookup from id -> path for button handlers
+const idToPath = Object.fromEntries(paramPairs);
+
+function syncHeaderBtns() {
+  const anyChanged = paramPairs.some(([, path]) => getParam(path) !== getDefault(path));
+  document.getElementById('resetBtn').disabled = !anyChanged;
+  document.getElementById('exportBtn').disabled = !anyChanged;
+}
+
+function syncResetBtn(id) {
+  const path = idToPath[id];
+  const btn = document.querySelector(`.param-reset[data-id="${id}"]`);
+  if (btn) btn.disabled = getParam(path) === getDefault(path);
+  syncHeaderBtns();
+}
+
+function syncAllResetBtns() {
+  for (const [id] of paramPairs) {
+    const path = idToPath[id];
+    const btn = document.querySelector(`.param-reset[data-id="${id}"]`);
+    if (btn) btn.disabled = getParam(path) === getDefault(path);
+  }
+  syncHeaderBtns();
+}
+
+function updateParam(id, value) {
+  const path = idToPath[id];
+  const range = document.getElementById(`${id}_range`);
+  const num = document.getElementById(`${id}_num`);
+  const min = parseFloat(range.min);
+  const max = parseFloat(range.max);
+  const clamped = Math.min(max, Math.max(min, value));
+  range.value = clamped;
+  num.value = clamped;
+  setParam(path, clamped);
+  syncResetBtn(id);
+  render();
+}
+
 for (const [id, path] of paramPairs) {
   const range = document.getElementById(`${id}_range`);
   const num = document.getElementById(`${id}_num`);
@@ -876,6 +1008,7 @@ for (const [id, path] of paramPairs) {
     const v = parseFloat(range.value);
     num.value = v;
     setParam(path, v);
+    syncResetBtn(id);
     render();
   });
 
@@ -884,10 +1017,30 @@ for (const [id, path] of paramPairs) {
     if (!isNaN(v)) {
       range.value = v;
       setParam(path, v);
+      syncResetBtn(id);
       render();
     }
   });
 }
+
+// Step up/down and reset buttons (delegated)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.param-up, .param-down, .param-reset');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (!id || !idToPath[id]) return;
+  const path = idToPath[id];
+  const range = document.getElementById(`${id}_range`);
+  const step = parseFloat(range.step);
+
+  if (btn.classList.contains('param-reset')) {
+    updateParam(id, getDefault(path));
+  } else if (btn.classList.contains('param-up')) {
+    updateParam(id, getParam(path) + step);
+  } else if (btn.classList.contains('param-down')) {
+    updateParam(id, getParam(path) - step);
+  }
+});
 
 // ---------------------------------------------------------------------------
 // Mode toggle
@@ -976,6 +1129,8 @@ pasteArea.addEventListener('input', () => {
       Math.abs(curr - 500) < Math.abs(prev - 500) ? curr : prev
     );
     setCompareBaseColor(parsedReference.stops[best].hex);
+    // Auto-collapse palette input after successful parse
+    document.getElementById('pasteDetails').removeAttribute('open');
   }
   render();
 });
@@ -1007,10 +1162,20 @@ compareColorText.addEventListener('input', () => {
 // ---------------------------------------------------------------------------
 
 const palettesEl = document.getElementById('palettes');
-const focusModeCheckbox = document.getElementById('focusMode');
+let focusModeActive = false;
+const focusModeBtn = document.getElementById('focusModeBtn');
 
-focusModeCheckbox.addEventListener('change', () => {
-  palettesEl.classList.toggle('focus-mode', focusModeCheckbox.checked);
+focusModeBtn.addEventListener('click', () => {
+  focusModeActive = !focusModeActive;
+  focusModeBtn.classList.toggle('active', focusModeActive);
+  palettesEl.classList.toggle('focus-mode', focusModeActive);
+});
+
+// Keyboard shortcut: 'f' toggles focus mode (when not in an input)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'f' && !e.target.matches('input, textarea')) {
+    focusModeBtn.click();
+  }
 });
 
 function render() {
@@ -1019,7 +1184,7 @@ function render() {
   } else {
     renderCompare();
   }
-  palettesEl.classList.toggle('focus-mode', focusModeCheckbox.checked);
+  palettesEl.classList.toggle('focus-mode', focusModeActive);
 }
 
 function renderTuning() {
@@ -1200,6 +1365,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     document.getElementById(`${id}_range`).value = v;
     document.getElementById(`${id}_num`).value = v;
   }
+  syncAllResetBtns();
   render();
 });
 
@@ -1237,7 +1403,8 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 // ---------------------------------------------------------------------------
 
 renderColorSlots();
-render();
+syncAllResetBtns();
+setMode('compare');
 </script>
 
 </body>
