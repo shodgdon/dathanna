@@ -176,22 +176,11 @@ npm run tuner
 
 This opens a self-contained HTML file (no build step, loads culori from CDN) with all generation parameters exposed as sliders.  Changes update color ramps in real time.
 
-#### Tuning mode
+A sticky header at the top provides navigation between modes, along with **Focus Mode**, **Reset All**, and **Export Config** buttons.  Reset All and Export Config are disabled when no parameters have been modified.
 
-The default view shows multiple color ramps simultaneously (blue, red, green, amber by default).  You can add/remove colors or load a demo palette.  All ramps update together when you adjust any parameter, so you can see how a change affects warm, cool, and neutral hues at once.
+#### Compare mode (default)
 
-Four collapsible parameter panels are available:
-
-| Panel | Parameters | What they control |
-| --- | --- | --- |
-| Toe Function | K1, K2 | How perceptual tone maps to OKLCH lightness.  Affects overall contrast distribution. |
-| Chroma Curve | Bell exponent, peak multiplier, min ratio | Shape of the chroma bell curve.  Controls saturation intensity across the ramp. |
-| Hue Shift | 6 hue-region sliders, ramp exponent | Subtle hue adjustments at light/dark extremes, per hue family. |
-| Tone Targets | 13 per-stop sliders (25–975) | Exact perceptual lightness target for each shade stop. |
-
-#### Compare mode
-
-Switch to Compare mode to evaluate dathanna's output against palettes from other tools.  Paste a Tailwind v3 or v4 palette:
+The default view evaluates dathanna's output against palettes from other tools.  Paste a Tailwind v3 or v4 palette into the collapsible **Palette Input** panel:
 
 ```css
 /* Tailwind v4 */
@@ -207,11 +196,28 @@ Switch to Compare mode to evaluate dathanna's output against palettes from other
 ...
 ```
 
-The format is auto-detected.  The reference palette appears above dathanna's generated output, aligned at the shared 50–950 stops (dathanna's extended 25 and 975 stops extend beyond).  Click any reference swatch to use that color as the generation input, or enter a hex value manually.
+The format is auto-detected and the input panel auto-collapses after a valid palette is parsed.  The reference palette appears above dathanna's generated output, aligned at the shared 50–950 stops (dathanna's extended 25 and 975 stops extend beyond).  Click any reference swatch to use that color as the generation input, or enter a hex value manually.
 
 Each dathanna swatch shows lightness (L) and chroma (C) deltas vs. the reference, color-coded green/yellow/red by magnitude.
 
-Toggle **Focus Mode** to hide all swatch text for a pure color-only comparison.
+#### Tuning mode
+
+Switch to Tuning mode to view multiple color ramps simultaneously (blue, red, green, amber by default).  You can add/remove colors or load a demo palette.  All ramps update together when you adjust any parameter, so you can see how a change affects warm, cool, and neutral hues at once.
+
+#### Parameter panels
+
+Four collapsible parameter panels sit below the palette output.  Each panel header has an info tooltip (ⓘ) explaining what its parameters control.  Every parameter has a slider, a direct-entry number field, left/right step buttons (◄►), and an individual reset button (↺) that is disabled when the parameter matches its default value.
+
+| Panel | Parameters | What they control |
+| --- | --- | --- |
+| Toe Function | K1, K2 | How perceptual tone maps to OKLCH lightness.  Affects overall contrast distribution. |
+| Chroma Curve | Bell exponent, peak multiplier, min ratio | Shape of the chroma bell curve.  Controls saturation intensity across the ramp. |
+| Hue Shift | 6 hue-region sliders, ramp exponent | Subtle hue adjustments at light/dark extremes, per hue family. |
+| Tone Targets | 13 per-stop sliders (25–975) | Exact perceptual lightness target for each shade stop.  Laid out column-first (top-to-bottom, then left-to-right). |
+
+#### Focus Mode
+
+Toggle **Focus Mode** (header button or press **f**) to hide all swatch text for a pure color-only comparison.
 
 #### Exporting parameters
 
