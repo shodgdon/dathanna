@@ -82,18 +82,18 @@ generateShades('#3b82f6', { clampToSrgb: false });
 
 ### Tailwind default palettes
 
-All 26 standard Tailwind v4/v4.2 default color palettes are available as OKLCH data, along with functions to extrapolate the additional 25 and 975 shades:
+All 26 standard Tailwind v4/v4.2 default color palettes are available as OKLCH data with all 13 stops (25–975) pre-computed:
 
 ```js
 import { TAILWIND_PALETTES, extrapolateLight, extrapolateDark } from './src/core.js';
 
-// Get a palette's stops (50–950)
+// Get a palette's full 13-stop data (25–975)
 const blue = TAILWIND_PALETTES.blue;
-// { 50: { l: 0.97, c: 0.014, h: 254.604 }, 100: { ... }, ... }
+// { 25: { l, c, h }, 50: { l: 0.97, c: 0.014, h: 254.604 }, ..., 975: { l, c, h } }
 
-// Generate the extended 25 and 975 shades
-const shade25 = extrapolateLight(blue);   // { l, c, h }
-const shade975 = extrapolateDark(blue);   // { l, c, h }
+// extrapolateLight/extrapolateDark are still available for custom palettes
+const shade25 = extrapolateLight(customPalette);   // { l, c, h }
+const shade975 = extrapolateDark(customPalette);   // { l, c, h }
 ```
 
 Available palettes: red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky, blue, indigo, violet, purple, fuchsia, pink, rose, slate, gray, zinc, neutral, stone, taupe, mauve, mist, olive.
@@ -142,6 +142,58 @@ const withOnColors = toTailwindCSS('brand', '#3b82f6', { onColors: true });
 const customOnColors = toTailwindCSS('brand', '#3b82f6', {
   onColors: { light: 'var(--color-text-inverse)', dark: 'var(--color-text-primary)' }
 });
+
+// Use a Tailwind palette name instead of generating from a color:
+const baseCss = toTailwindCSS('base', 'slate');
+// Outputs the stored slate palette data as CSS variables
+```
+
+### Brand palette generation
+
+Generate a complete brand color package from a single input color — brand shades, a matched neutral base palette, and per-shade contrast decisions:
+
+```js
+import { generateBrandPalette } from './src/core.js';
+
+const palette = generateBrandPalette('#3b82f6');
+// {
+//   brand:         { 25: '#f8fbff', 50: '#eff6ff', ..., 975: '#121b2d' },
+//   base:          { 25: '#f9f9fb', 50: '#f1f5f9', ..., 975: '#0c1220' },
+//   brandContrast: { 25: 'light', 50: 'light', ..., 900: 'dark', 975: 'dark' },
+//   baseSource:    'slate',
+//   pinnedStop:    500,
+// }
+```
+
+- **`brand`** — 13 hex shades generated from the input color
+- **`base`** — 13 hex shades from the closest Tailwind neutral palette
+- **`brandContrast`** — `'light'` (use dark text) or `'dark'` (use light text) for each brand shade
+- **`baseSource`** — which neutral was selected (e.g. `'slate'`, `'stone'`)
+- **`pinnedStop`** — which stop the input color maps to
+
+### Neutral matching
+
+Find the closest Tailwind neutral palette for any color:
+
+```js
+import { matchNeutral } from './src/core.js';
+
+const { name, palette } = matchNeutral('#3b82f6');
+// name: 'slate'
+// palette: { 25: { l, c, h }, 50: { l, c, h }, ..., 975: { l, c, h } }
+```
+
+The 9 neutral candidates: neutral, taupe, stone, olive, mist, slate, gray, zinc, mauve.
+
+### Contrast mode
+
+Determine whether a color needs light or dark text:
+
+```js
+import { getContrastMode } from './src/core.js';
+
+getContrastMode('#3b82f6');  // 'light' (L >= 0.6, use dark text)
+getContrastMode('#1e3a5f');  // 'dark'  (L < 0.6, use light text)
 ```
 
 ---
@@ -281,7 +333,7 @@ dathanna/
   package.json           # Project config, culori dependency
   src/
     core.js              # All generation logic, palette data, exports
-  test.js                # Comparison against Tailwind v4 reference values
+  test.js                # Comparison tests and API validation
   preview.js             # Generates preview.html from CLI args or demo colors
   preview.html           # Generated output (not checked in)
   tuner.html             # Interactive parameter tuner (open directly in browser)

@@ -31,6 +31,18 @@ export const STOPS = [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950, 
 export const STANDARD_STOPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
 
 /**
+ * OKLCH lightness threshold for contrast decisions.
+ * Shades with L >= this value are considered "light" (use dark text);
+ * shades below are "dark" (use light text).
+ */
+const CONTRAST_LIGHTNESS_THRESHOLD = 0.6;
+
+/**
+ * The 9 Tailwind neutral palette names, used for neutral matching.
+ */
+const NEUTRAL_NAMES = ['neutral', 'taupe', 'stone', 'olive', 'mist', 'slate', 'gray', 'zinc', 'mauve'];
+
+/**
  * Toe function constants.
  * Original Ottosson values: K1=0.206, K2=0.03
  * Modified values (from facelessuser's exploration) that better approximate
@@ -69,11 +81,12 @@ const TONE_TARGETS = {
 
 /**
  * All 26 standard Tailwind default color palettes with their official OKLCH
- * values for stops 50–950. Use with extrapolateLight/extrapolateDark to
- * generate the additional 25 and 975 shades.
+ * values for all 13 stops (25–975). Stops 25 and 975 were pre-computed
+ * using extrapolateLight/extrapolateDark from the original 50–950 data.
  */
 export const TAILWIND_PALETTES = {
   red: {
+    25:  { l: 0.9869, c: 0.0053, h: 17.38 },
     50:  { l: 0.971, c: 0.013, h: 17.38 },
     100: { l: 0.936, c: 0.032, h: 17.717 },
     200: { l: 0.885, c: 0.062, h: 18.334 },
@@ -85,8 +98,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.444, c: 0.177, h: 26.899 },
     900: { l: 0.396, c: 0.141, h: 25.723 },
     950: { l: 0.258, c: 0.092, h: 26.042 },
+    975: { l: 0.1681, c: 0.06, h: 26.042 },
   },
   orange: {
+    25:  { l: 0.9913, c: 0.0067, h: 73.684 },
     50:  { l: 0.98,  c: 0.016, h: 73.684 },
     100: { l: 0.954, c: 0.038, h: 75.164 },
     200: { l: 0.901, c: 0.076, h: 70.697 },
@@ -98,8 +113,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.47,  c: 0.157, h: 37.304 },
     900: { l: 0.408, c: 0.123, h: 38.172 },
     950: { l: 0.266, c: 0.079, h: 36.259 },
+    975: { l: 0.1734, c: 0.0507, h: 36.259 },
   },
   amber: {
+    25:  { l: 0.9956, c: 0.0082, h: 95.277 },
     50:  { l: 0.987, c: 0.022, h: 95.277 },
     100: { l: 0.962, c: 0.059, h: 95.617 },
     200: { l: 0.924, c: 0.12,  h: 95.746 },
@@ -111,8 +128,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.473, c: 0.137, h: 46.201 },
     900: { l: 0.414, c: 0.112, h: 45.904 },
     950: { l: 0.279, c: 0.077, h: 45.635 },
+    975: { l: 0.188, c: 0.0529, h: 45.635 },
   },
   yellow: {
+    25:  { l: 0.9937, c: 0.0095, h: 102.212 },
     50:  { l: 0.987, c: 0.026, h: 102.212 },
     100: { l: 0.973, c: 0.071, h: 103.193 },
     200: { l: 0.945, c: 0.129, h: 101.54 },
@@ -124,8 +143,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.476, c: 0.114, h: 61.907 },
     900: { l: 0.421, c: 0.095, h: 57.708 },
     950: { l: 0.286, c: 0.066, h: 53.813 },
+    975: { l: 0.1943, c: 0.0459, h: 53.813 },
   },
   lime: {
+    25:  { l: 0.9941, c: 0.0143, h: 120.757 },
     50:  { l: 0.986, c: 0.031, h: 120.757 },
     100: { l: 0.967, c: 0.067, h: 122.328 },
     200: { l: 0.938, c: 0.127, h: 124.321 },
@@ -137,8 +158,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.453, c: 0.124, h: 130.933 },
     900: { l: 0.405, c: 0.101, h: 131.063 },
     950: { l: 0.274, c: 0.072, h: 132.109 },
+    975: { l: 0.1854, c: 0.0513, h: 132.109 },
   },
   green: {
+    25:  { l: 0.9915, c: 0.0074, h: 155.826 },
     50:  { l: 0.982, c: 0.018, h: 155.826 },
     100: { l: 0.962, c: 0.044, h: 156.743 },
     200: { l: 0.925, c: 0.084, h: 155.995 },
@@ -150,8 +173,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.448, c: 0.119, h: 151.328 },
     900: { l: 0.393, c: 0.095, h: 152.535 },
     950: { l: 0.266, c: 0.065, h: 152.934 },
+    975: { l: 0.18, c: 0.0445, h: 152.934 },
   },
   emerald: {
+    25:  { l: 0.9912, c: 0.0085, h: 166.113 },
     50:  { l: 0.979, c: 0.021, h: 166.113 },
     100: { l: 0.95,  c: 0.052, h: 163.051 },
     200: { l: 0.905, c: 0.093, h: 164.15 },
@@ -163,8 +188,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.432, c: 0.095, h: 166.913 },
     900: { l: 0.378, c: 0.077, h: 168.94 },
     950: { l: 0.262, c: 0.051, h: 172.552 },
+    975: { l: 0.1816, c: 0.0338, h: 172.552 },
   },
   teal: {
+    25:  { l: 0.9946, c: 0.0038, h: 180.72 },
     50:  { l: 0.984, c: 0.014, h: 180.72 },
     100: { l: 0.953, c: 0.051, h: 180.801 },
     200: { l: 0.91,  c: 0.096, h: 180.426 },
@@ -176,8 +203,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.437, c: 0.078, h: 188.216 },
     900: { l: 0.386, c: 0.063, h: 188.416 },
     950: { l: 0.277, c: 0.046, h: 192.524 },
+    975: { l: 0.1988, c: 0.0336, h: 192.524 },
   },
   cyan: {
+    25:  { l: 0.9942, c: 0.008, h: 200.873 },
     50:  { l: 0.984, c: 0.019, h: 200.873 },
     100: { l: 0.956, c: 0.045, h: 203.388 },
     200: { l: 0.917, c: 0.08,  h: 205.041 },
@@ -189,8 +218,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.45,  c: 0.085, h: 224.283 },
     900: { l: 0.398, c: 0.07,  h: 227.392 },
     950: { l: 0.302, c: 0.056, h: 229.695 },
+    975: { l: 0.2292, c: 0.0448, h: 229.695 },
   },
   sky: {
+    25:  { l: 0.9892, c: 0.0065, h: 236.62 },
     50:  { l: 0.977, c: 0.013, h: 236.62 },
     100: { l: 0.951, c: 0.026, h: 236.824 },
     200: { l: 0.901, c: 0.058, h: 230.902 },
@@ -202,8 +233,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.443, c: 0.11,  h: 240.79 },
     900: { l: 0.391, c: 0.09,  h: 240.876 },
     950: { l: 0.293, c: 0.066, h: 243.157 },
+    975: { l: 0.2196, c: 0.0484, h: 243.157 },
   },
   blue: {
+    25:  { l: 0.9868, c: 0.0061, h: 254.604 },
     50:  { l: 0.97,  c: 0.014, h: 254.604 },
     100: { l: 0.932, c: 0.032, h: 255.585 },
     200: { l: 0.882, c: 0.059, h: 254.128 },
@@ -215,8 +248,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.424, c: 0.199, h: 265.638 },
     900: { l: 0.379, c: 0.146, h: 265.522 },
     950: { l: 0.282, c: 0.091, h: 267.935 },
+    975: { l: 0.2098, c: 0.0567, h: 267.935 },
   },
   indigo: {
+    25:  { l: 0.9794, c: 0.0095, h: 272.314 },
     50:  { l: 0.962, c: 0.018, h: 272.314 },
     100: { l: 0.93,  c: 0.034, h: 272.788 },
     200: { l: 0.87,  c: 0.065, h: 274.039 },
@@ -228,8 +263,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.398, c: 0.195, h: 277.366 },
     900: { l: 0.359, c: 0.144, h: 278.697 },
     950: { l: 0.257, c: 0.09,  h: 281.288 },
+    975: { l: 0.184, c: 0.0562, h: 281.288 },
   },
   violet: {
+    25:  { l: 0.9831, c: 0.0088, h: 293.756 },
     50:  { l: 0.969, c: 0.016, h: 293.756 },
     100: { l: 0.943, c: 0.029, h: 294.588 },
     200: { l: 0.894, c: 0.057, h: 293.283 },
@@ -241,8 +278,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.432, c: 0.232, h: 292.759 },
     900: { l: 0.38,  c: 0.189, h: 293.745 },
     950: { l: 0.283, c: 0.141, h: 291.089 },
+    975: { l: 0.2108, c: 0.1052, h: 291.089 },
   },
   purple: {
+    25:  { l: 0.9902, c: 0.0059, h: 308.299 },
     50:  { l: 0.977, c: 0.014, h: 308.299 },
     100: { l: 0.946, c: 0.033, h: 307.174 },
     200: { l: 0.902, c: 0.063, h: 306.703 },
@@ -254,8 +293,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.438, c: 0.218, h: 303.724 },
     900: { l: 0.381, c: 0.176, h: 304.987 },
     950: { l: 0.291, c: 0.149, h: 302.717 },
+    975: { l: 0.2223, c: 0.1261, h: 302.717 },
   },
   fuchsia: {
+    25:  { l: 0.989, c: 0.0078, h: 320.058 },
     50:  { l: 0.977, c: 0.017, h: 320.058 },
     100: { l: 0.952, c: 0.037, h: 318.852 },
     200: { l: 0.903, c: 0.076, h: 319.62 },
@@ -267,8 +308,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.452, c: 0.211, h: 324.591 },
     900: { l: 0.401, c: 0.17,  h: 325.612 },
     950: { l: 0.293, c: 0.136, h: 325.661 },
+    975: { l: 0.2141, c: 0.1088, h: 325.661 },
   },
   pink: {
+    25:  { l: 0.9838, c: 0.007, h: 343.198 },
     50:  { l: 0.971, c: 0.014, h: 343.198 },
     100: { l: 0.948, c: 0.028, h: 342.258 },
     200: { l: 0.899, c: 0.061, h: 343.231 },
@@ -280,8 +323,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.459, c: 0.187, h: 3.815 },
     900: { l: 0.408, c: 0.153, h: 2.432 },
     950: { l: 0.284, c: 0.109, h: 3.907 },
+    975: { l: 0.1977, c: 0.0777, h: 3.907 },
   },
   rose: {
+    25:  { l: 0.9837, c: 0.0075, h: 12.422 },
     50:  { l: 0.969, c: 0.015, h: 12.422 },
     100: { l: 0.941, c: 0.03,  h: 12.58 },
     200: { l: 0.892, c: 0.058, h: 10.001 },
@@ -293,8 +338,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.455, c: 0.188, h: 13.697 },
     900: { l: 0.41,  c: 0.159, h: 10.272 },
     950: { l: 0.271, c: 0.105, h: 12.094 },
+    975: { l: 0.1791, c: 0.0693, h: 12.094 },
   },
   slate: {
+    25:  { l: 0.992, c: 0.0013, h: 247.858 },
     50:  { l: 0.984, c: 0.003, h: 247.858 },
     100: { l: 0.968, c: 0.007, h: 247.896 },
     200: { l: 0.929, c: 0.013, h: 255.508 },
@@ -306,8 +353,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.279, c: 0.041, h: 260.031 },
     900: { l: 0.208, c: 0.042, h: 265.755 },
     950: { l: 0.129, c: 0.042, h: 264.695 },
+    975: { l: 0.08, c: 0.0399, h: 264.695 },
   },
   gray: {
+    25:  { l: 0.9932, c: 0.0013, h: 247.839 },
     50:  { l: 0.985, c: 0.002, h: 247.839 },
     100: { l: 0.967, c: 0.003, h: 264.542 },
     200: { l: 0.928, c: 0.006, h: 264.531 },
@@ -319,8 +368,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.278, c: 0.033, h: 256.848 },
     900: { l: 0.21,  c: 0.034, h: 264.665 },
     950: { l: 0.13,  c: 0.028, h: 261.692 },
+    975: { l: 0.0805, c: 0.0231, h: 261.692 },
   },
   zinc: {
+    25:  { l: 0.9932, c: 0, h: 0 },
     50:  { l: 0.985, c: 0,     h: 0 },
     100: { l: 0.967, c: 0.001, h: 286.375 },
     200: { l: 0.92,  c: 0.004, h: 286.32 },
@@ -332,8 +383,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.274, c: 0.006, h: 286.033 },
     900: { l: 0.21,  c: 0.006, h: 285.885 },
     950: { l: 0.141, c: 0.005, h: 285.823 },
+    975: { l: 0.0947, c: 0.0042, h: 285.823 },
   },
   neutral: {
+    25:  { l: 0.9925, c: 0, h: 0 },
     50:  { l: 0.985, c: 0, h: 0 },
     100: { l: 0.97,  c: 0, h: 0 },
     200: { l: 0.922, c: 0, h: 0 },
@@ -345,8 +398,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.269, c: 0, h: 0 },
     900: { l: 0.205, c: 0, h: 0 },
     950: { l: 0.145, c: 0, h: 0 },
+    975: { l: 0.1026, c: 0, h: 0 },
   },
   stone: {
+    25:  { l: 0.9925, c: 0.0005, h: 106.423 },
     50:  { l: 0.985, c: 0.001, h: 106.423 },
     100: { l: 0.97,  c: 0.001, h: 106.424 },
     200: { l: 0.923, c: 0.003, h: 48.717 },
@@ -358,8 +413,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.268, c: 0.007, h: 34.298 },
     900: { l: 0.216, c: 0.006, h: 56.043 },
     950: { l: 0.147, c: 0.004, h: 49.25 },
+    975: { l: 0.1, c: 0.0027, h: 49.25 },
   },
   taupe: {
+    25:  { l: 0.9951, c: 0.0018, h: 67.8 },
     50:  { l: 0.986, c: 0.002, h: 67.8 },
     100: { l: 0.96,  c: 0.002, h: 17.2 },
     200: { l: 0.922, c: 0.005, h: 34.3 },
@@ -371,8 +428,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.268, c: 0.011, h: 36.5 },
     900: { l: 0.214, c: 0.009, h: 43.1 },
     950: { l: 0.147, c: 0.004, h: 49.3 },
+    975: { l: 0.101, c: 0.0018, h: 49.3 },
   },
   mauve: {
+    25:  { l: 0.9944, c: 0, h: 0 },
     50:  { l: 0.985, c: 0,     h: 0 },
     100: { l: 0.96,  c: 0.003, h: 325.6 },
     200: { l: 0.922, c: 0.005, h: 325.62 },
@@ -384,8 +443,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.263, c: 0.024, h: 320.12 },
     900: { l: 0.212, c: 0.019, h: 322.12 },
     950: { l: 0.145, c: 0.008, h: 326 },
+    975: { l: 0.0992, c: 0.0034, h: 326 },
   },
   mist: {
+    25:  { l: 0.9954, c: 0.0018, h: 197.1 },
     50:  { l: 0.987, c: 0.002, h: 197.1 },
     100: { l: 0.963, c: 0.002, h: 197.1 },
     200: { l: 0.925, c: 0.005, h: 214.3 },
@@ -397,8 +458,10 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.275, c: 0.011, h: 216.9 },
     900: { l: 0.218, c: 0.008, h: 223.9 },
     950: { l: 0.148, c: 0.004, h: 228.8 },
+    975: { l: 0.1005, c: 0.002, h: 228.8 },
   },
   olive: {
+    25:  { l: 0.9958, c: 0.0018, h: 106.5 },
     50:  { l: 0.988, c: 0.003, h: 106.5 },
     100: { l: 0.966, c: 0.005, h: 106.5 },
     200: { l: 0.93,  c: 0.007, h: 106.5 },
@@ -410,6 +473,7 @@ export const TAILWIND_PALETTES = {
     800: { l: 0.286, c: 0.016, h: 107.4 },
     900: { l: 0.228, c: 0.013, h: 107.4 },
     950: { l: 0.153, c: 0.006, h: 107.1 },
+    975: { l: 0.1027, c: 0.0028, h: 107.1 },
   },
 };
 
@@ -684,18 +748,28 @@ export function generateShades(inputColor, options = {}) {
 // ---------------------------------------------------------------------------
 
 /**
- * Determine whether light or dark text should be used on a given hex color.
- * Uses relative luminance with a 0.55 threshold.
+ * Determine whether a background color is "light" (needs dark text)
+ * or "dark" (needs light text) using OKLCH lightness.
  *
- * @param {string} hex - Hex color string
- * @returns {'light'|'dark'} Which text tone to use on this background
+ * @param {string} colorStr - Any CSS color string
+ * @returns {'light'|'dark'} 'light' if background is light, 'dark' if dark
  */
-function contrastTone(hex) {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return lum > 0.55 ? 'dark' : 'light';
+function contrastTone(colorStr) {
+  const parsed = parse(colorStr);
+  if (!parsed) return 'dark';
+  const lch = toOklch(parsed);
+  return (lch.l || 0) >= CONTRAST_LIGHTNESS_THRESHOLD ? 'light' : 'dark';
+}
+
+/**
+ * Determine whether a color is "light" (needs dark text on it)
+ * or "dark" (needs light text on it).
+ *
+ * @param {string} color - Any CSS color string (hex, rgb, hsl, oklch, etc.)
+ * @returns {'light'|'dark'} Contrast mode for the given color
+ */
+export function getContrastMode(color) {
+  return contrastTone(color);
 }
 
 // ---------------------------------------------------------------------------
@@ -705,8 +779,12 @@ function contrastTone(hex) {
 /**
  * Generate a Tailwind v4 @theme block for a named color.
  *
- * @param {string} name - Color name (e.g. "brand", "primary")
- * @param {string} inputColor - Input color string
+ * The second argument can be either:
+ * - A CSS color string (hex, rgb, etc.) — generates shades from that color
+ * - A Tailwind palette name (e.g. 'slate', 'blue') — uses the stored palette data
+ *
+ * @param {string} name - CSS variable prefix (e.g. "brand", "base")
+ * @param {string} inputColorOrPalette - Input color string or TAILWIND_PALETTES key
  * @param {object} [options] - Same options as generateShades, plus:
  * @param {'oklch'|'hex'} [options.format='oklch'] - Output color format
  * @param {boolean} [options.extendedStops=true] - Include 25 and 975 stops
@@ -715,9 +793,27 @@ function contrastTone(hex) {
  *   (hex colors, CSS variables, or any valid CSS value).
  * @returns {string} CSS @theme block
  */
-export function toTailwindCSS(name, inputColor, options = {}) {
+export function toTailwindCSS(name, inputColorOrPalette, options = {}) {
   const { format = 'oklch', extendedStops = true, onColors = false, ...shadeOptions } = options;
-  const { shades } = generateShades(inputColor, shadeOptions);
+
+  let shades;
+  if (TAILWIND_PALETTES[inputColorOrPalette]) {
+    // Palette name — look up stored data and format like generateShades output
+    const palette = TAILWIND_PALETTES[inputColorOrPalette];
+    shades = {};
+    for (const stop of STOPS) {
+      const lch = palette[stop];
+      const color = { mode: 'oklch', l: lch.l, c: lch.c, h: lch.h };
+      shades[stop] = {
+        oklch: { l: lch.l, c: lch.c, h: lch.h },
+        hex: formatHex(color),
+        css: formatCss(color),
+      };
+    }
+  } else {
+    ({ shades } = generateShades(inputColorOrPalette, shadeOptions));
+  }
+
   const stops = extendedStops ? STOPS : STANDARD_STOPS;
 
   const lines = stops.map((stop) => {
@@ -750,4 +846,105 @@ export function toTailwindCSS(name, inputColor, options = {}) {
   }
 
   return `@theme {\n${lines.join('\n')}\n}`;
+}
+
+// ---------------------------------------------------------------------------
+// Neutral matching
+// ---------------------------------------------------------------------------
+
+/**
+ * Find the closest Tailwind neutral palette for a given color based on
+ * OKLCH hue similarity. If the color has very low chroma (near-gray),
+ * defaults to 'neutral'.
+ *
+ * @param {string} color - Any CSS color string
+ * @returns {{ name: string, palette: object }} The matched palette name and its full 13-stop OKLCH data
+ */
+export function matchNeutral(color) {
+  const parsed = parse(color);
+  if (!parsed) {
+    throw new Error(`Could not parse color: "${color}"`);
+  }
+
+  const lch = toOklch(parsed);
+  const brandChroma = lch.c || 0;
+  const brandHue = lch.h || 0;
+
+  // Near-achromatic colors default to true neutral
+  if (brandChroma < 0.01) {
+    return { name: 'neutral', palette: TAILWIND_PALETTES.neutral };
+  }
+
+  let bestName = 'neutral';
+  let bestDist = Infinity;
+
+  for (const name of NEUTRAL_NAMES) {
+    const palette = TAILWIND_PALETTES[name];
+    const neutralHue = palette[500].h || 0;
+    const neutralChroma = palette[500].c || 0;
+
+    // Skip true neutral (no hue) — it's the fallback
+    if (neutralChroma < 0.001) continue;
+
+    // Circular hue distance
+    let dist = Math.abs(brandHue - neutralHue);
+    if (dist > 180) dist = 360 - dist;
+
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestName = name;
+    }
+  }
+
+  return { name: bestName, palette: TAILWIND_PALETTES[bestName] };
+}
+
+// ---------------------------------------------------------------------------
+// Brand palette generation
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate a complete brand color package from a single input color.
+ * Returns brand shades, a matched neutral base palette, and per-shade
+ * contrast decisions.
+ *
+ * @param {string} primaryColor - Any CSS color string (hex, rgb, hsl, oklch, etc.)
+ * @param {object} [options]
+ * @param {boolean} [options.clampToSrgb=true] - Gamut-map to sRGB. Set false for P3 output.
+ * @returns {{
+ *   brand: Record<number, string>,
+ *   base: Record<number, string>,
+ *   brandContrast: Record<number, 'light'|'dark'>,
+ *   baseSource: string,
+ *   pinnedStop: number
+ * }}
+ */
+export function generateBrandPalette(primaryColor, options = {}) {
+  const { clampToSrgb = true } = options;
+
+  // Generate brand shades
+  const { shades, pinnedStop } = generateShades(primaryColor, { clampToSrgb });
+
+  // Match neutral base palette
+  const { name: baseSource, palette: basePalette } = matchNeutral(primaryColor);
+
+  // Build output
+  const brand = {};
+  const brandContrast = {};
+  const base = {};
+
+  for (const stop of STOPS) {
+    // Brand: hex from generated shades
+    brand[stop] = shades[stop].hex;
+
+    // Contrast decision from OKLCH lightness of the generated shade
+    brandContrast[stop] = (shades[stop].oklch.l >= CONTRAST_LIGHTNESS_THRESHOLD) ? 'light' : 'dark';
+
+    // Base: convert stored OKLCH to hex
+    const lch = basePalette[stop];
+    const color = { mode: 'oklch', l: lch.l, c: lch.c, h: lch.h };
+    base[stop] = formatHex(clampToSrgb ? clampChroma(color, 'oklch', 'rgb') : color);
+  }
+
+  return { brand, base, brandContrast, baseSource, pinnedStop };
 }
