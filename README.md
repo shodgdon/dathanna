@@ -192,8 +192,8 @@ Determine whether a color needs light or dark text:
 ```js
 import { getContrastMode } from './src/core.js';
 
-getContrastMode('#3b82f6');  // 'light' (L >= 0.7, use dark text)
-getContrastMode('#1e3a5f');  // 'dark'  (L < 0.7, use light text)
+getContrastMode('#3b82f6');  // 'dark'  (L < 0.725, use light text)
+getContrastMode('#1e3a5f');  // 'dark'  (L < 0.725, use light text)
 ```
 
 ---
