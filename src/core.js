@@ -35,7 +35,7 @@ export const STANDARD_STOPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 
  * Shades with L >= this value are considered "light" (use dark text);
  * shades below are "dark" (use light text).
  */
-const CONTRAST_LIGHTNESS_THRESHOLD = 0.6;
+const CONTRAST_LIGHTNESS_THRESHOLD = 0.7;
 
 /**
  * The 9 Tailwind neutral palette names, used for neutral matching.
