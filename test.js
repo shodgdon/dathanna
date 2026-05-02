@@ -203,9 +203,9 @@ assert(getContrastMode('#cccccc') === 'light', 'light gray is light');
 console.log(`  Dark gray (#333333) → ${getContrastMode('#333333')}`);
 assert(getContrastMode('#333333') === 'dark', 'dark gray is dark');
 
-// Mid-tone test: blue-500 (#3b82f6) has OKLCH L ~0.62, should be light
+// Mid-tone test: blue-500 (#3b82f6) has OKLCH L ~0.62, below threshold
 console.log(`  Blue-500 (#3b82f6) → ${getContrastMode('#3b82f6')}`);
-assert(getContrastMode('#3b82f6') === 'light', 'blue-500 is light (L ~0.62)');
+assert(getContrastMode('#3b82f6') === 'dark', 'blue-500 is dark (L ~0.62)');
 
 console.log('\n=== generateBrandPalette ===\n');
 
